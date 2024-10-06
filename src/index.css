@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Asegúrate de que el contenedor principal ocupe toda la altura de la pantalla */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ajusta el ancho máximo del contenedor para pantallas más grandes */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1024px;
+  }
+}
