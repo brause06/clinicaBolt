@@ -15,6 +15,10 @@ export class Objetivo {
     @Column()
     completed!: boolean;
 
-    @ManyToOne(() => Paciente)
+    @ManyToOne(() => Paciente, paciente => paciente.objetivos)
     patient!: Paciente;
 }
+
+
+
+    

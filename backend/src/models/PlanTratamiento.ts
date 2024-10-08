@@ -15,6 +15,10 @@ export class PlanTratamiento {
     @Column()
     frequency!: string;
 
-    @ManyToOne(() => Paciente)
+    @ManyToOne(() => Paciente, paciente => paciente.planesTratamiento)
     patient!: Paciente;
 }
+
+
+
+    

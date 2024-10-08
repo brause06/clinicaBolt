@@ -2,6 +2,10 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, OneToOne, JoinColumn
 import { Usuario } from "./Usuario";
 import { Cita } from "./Cita";
 import { Ejercicio } from "./Ejercicio";
+import { PlanTratamiento } from "./PlanTratamiento";
+import { Objetivo } from "./Objetivo";
+import { Progreso } from "./Progreso";
+import { Mensaje } from "./Mensaje";
 
 @Entity("paciente")
 export class Paciente {
@@ -30,5 +34,19 @@ export class Paciente {
     @OneToMany(() => Ejercicio, ejercicio => ejercicio.patient)
     ejercicios!: Ejercicio[];
 
-    
+    @OneToMany(() => PlanTratamiento, planTratamiento => planTratamiento.patient)
+    planesTratamiento!: PlanTratamiento[];
+
+    @OneToMany(() => Objetivo, objetivo => objetivo.patient)
+    objetivos!: Objetivo[];
+
+    @OneToMany(() => Progreso, progreso => progreso.patient)
+    progresos!: Progreso[];
+
+    @OneToMany(() => Mensaje, mensaje => mensaje.patient)
+    mensajes!: Mensaje[];
 }
+
+
+
+

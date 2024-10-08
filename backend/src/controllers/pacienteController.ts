@@ -2,6 +2,10 @@ import { Request, Response } from "express"
 import { AppDataSource } from "../config/database"
 import { Paciente } from "../models/Paciente"
 import { Cita } from "../models/Cita";
+import { PlanTratamiento } from "../models/PlanTratamiento";
+import { Objetivo } from "../models/Objetivo";
+import { Progreso } from "../models/Progreso";
+import { Mensaje } from "../models/Mensaje";
 
 const pacienteRepository = AppDataSource.getRepository(Paciente)
 
@@ -85,4 +89,79 @@ export const getPacienteCitas = async (req: Request, res: Response) => {
     }
 };
 
+export const getPacientePlanTratamiento = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const planTratamiento = await AppDataSource.getRepository(PlanTratamiento).findOne({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+        
+        if (!planTratamiento) {
+            return res.status(404).json({ message: "No se encontró plan de tratamiento para este paciente" });
+        }
+        
+        res.json(planTratamiento);
+    } catch (error) {
+        console.error("Error al obtener el plan de tratamiento del paciente:", error);
+        res.status(500).json({ message: "Error al obtener el plan de tratamiento del paciente" });
+    }
+};
+
+export const getPacienteObjetivos = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const objetivos = await AppDataSource.getRepository(Objetivo).find({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+        
+        if (objetivos.length === 0) {
+            return res.status(404).json({ message: "No se encontraron objetivos para este paciente" });
+        }
+        
+        res.json(objetivos);
+    } catch (error) {
+        console.error("Error al obtener los objetivos del paciente:", error);
+        res.status(500).json({ message: "Error al obtener los objetivos del paciente" });
+    }
+};
+
+export const getPacienteProgresos = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const progresos = await AppDataSource.getRepository(Progreso).find({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+        
+        if (progresos.length === 0) {
+            return res.status(404).json({ message: "No se encontraron progresos para este paciente" });
+        }
+        
+        res.json(progresos);
+    } catch (error) {
+        console.error("Error al obtener los progresos del paciente:", error);
+        res.status(500).json({ message: "Error al obtener los progresos del paciente" });
+    }
+};
+
+export const getPacienteMensajes = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const mensajes = await AppDataSource.getRepository(Mensaje).find({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+        
+        if (mensajes.length === 0) {
+            return res.status(404).json({ message: "No se encontraron mensajes para este paciente" });
+        }
+        
+        res.json(mensajes);
+    } catch (error) {
+        console.error("Error al obtener los mensajes del paciente:", error);
+        res.status(500).json({ message: "Error al obtener los mensajes del paciente" });
+    }
+};
 // Implementa más funciones según sea necesario

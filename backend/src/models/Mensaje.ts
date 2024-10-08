@@ -24,6 +24,6 @@ export class Mensaje {
     @Column({ nullable: true })
     fileUrl?: string;
 
-    @ManyToOne(() => Paciente)
+    @ManyToOne(() => Paciente, paciente => paciente.mensajes)
     patient!: Paciente;
 }

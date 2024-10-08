@@ -18,6 +18,11 @@ export class Progreso {
     @Column()
     strength!: number;
 
-    @ManyToOne(() => Paciente)
+    @ManyToOne(() => Paciente, paciente => paciente.progresos)
     patient!: Paciente;
 }
+
+
+
+    
+

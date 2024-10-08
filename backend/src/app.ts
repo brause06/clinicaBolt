@@ -12,6 +12,7 @@ import mensajeRoutes from "./routes/mensajeRoutes"
 import authRoutes from "./routes/authRoutes"
 import cors from 'cors';
 
+
 const app = express()
 console.log("Servidor Express inicializado")
 const PORT = process.env.PORT || 3000
