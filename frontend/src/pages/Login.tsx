@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 const Login = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -9,15 +11,33 @@ const Login = () => {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    if (login(email, password)) {
-      navigate('/dashboard')
-    } else {
-      setError('Invalid email or password')
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError('');
+    try {
+      console.log('Iniciando solicitud de login...');
+      const response = await fetch(`${API_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log('Datos de respuesta:', data);
+      if (data.token) {
+        login(data.token);
+        navigate('/dashboard');
+      } else {
+        throw new Error('Token no recibido');
+      }
+    } catch (err) {
+      console.error('Error completo:', err);
+      setError('Error de inicio de sesión: ' + (err instanceof Error ? err.message : String(err)));
     }
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">

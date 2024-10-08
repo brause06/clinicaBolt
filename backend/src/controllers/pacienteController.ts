@@ -1,15 +1,20 @@
 import { Request, Response } from "express"
 import { AppDataSource } from "../config/database"
 import { Paciente } from "../models/Paciente"
+import { Cita } from "../models/Cita";
 
 const pacienteRepository = AppDataSource.getRepository(Paciente)
 
 export const getAllPacientes = async (req: Request, res: Response) => {
     try {
-        const pacientes = await pacienteRepository.find()
-        res.json(pacientes)
+        const pacientes = await pacienteRepository.find({
+            relations: ['usuario']
+        });
+        console.log('Pacientes encontrados:', pacientes); 
+        res.json(pacientes);
     } catch (error) {
-        res.status(500).json({ message: "Error al obtener pacientes" })
+        console.error('Error al obtener pacientes:', error);  
+        res.status(500).json({ message: "Error al obtener pacientes" });
     }
 }
 
@@ -60,5 +65,24 @@ export const deletePaciente = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error al eliminar paciente" })
     }
 }
+
+export const getPacienteCitas = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const citas = await AppDataSource.getRepository(Cita).find({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+        
+        if (citas.length === 0) {
+            return res.status(404).json({ message: "No se encontraron citas para este paciente" });
+        }
+        
+        res.json(citas);
+    } catch (error) {
+        console.error("Error al obtener las citas del paciente:", error);
+        res.status(500).json({ message: "Error al obtener las citas del paciente" });
+    }
+};
 
 // Implementa más funciones según sea necesario

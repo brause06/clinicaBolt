@@ -1,13 +1,14 @@
 import express from "express"
-import { getAllCitas, createCita, getCitaById, updateCita, deleteCita } from "../controllers/citaController"
-import { auth, checkRole } from "../middleware/auth"
+import { getAllCitas, getCitaById, createCita, updateCita, deleteCita } from "../controllers/citaController"
+import { auth, roleAuth } from "../middleware/auth"
+import { UserRole } from "../types/roles"
 
 const router = express.Router()
 
-router.get("/", auth, getAllCitas)
-router.post("/", auth, checkRole(['admin', 'physiotherapist']), createCita)
-router.get("/:id", auth, getCitaById)
-router.put("/:id", auth, checkRole(['admin', 'physiotherapist']), updateCita)
-router.delete("/:id", auth, checkRole(['admin']), deleteCita)
+router.get("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getAllCitas)
+router.get("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getCitaById)
+router.post("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), createCita)
+router.put("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), updateCita)
+router.delete("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), deleteCita)
 
 export default router

@@ -63,3 +63,22 @@ export const deleteObjetivo = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error al eliminar objetivo" })
     }
 }
+
+export const getPacienteObjetivos = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const objetivos = await objetivoRepository.find({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+
+        if (objetivos.length === 0) {
+            return res.status(404).json({ message: "No se encontraron objetivos para este paciente" });
+        }
+
+        res.json(objetivos);
+    } catch (error) {
+        console.error("Error al obtener los objetivos del paciente:", error);
+        res.status(500).json({ message: "Error al obtener los objetivos del paciente" });
+    }
+};

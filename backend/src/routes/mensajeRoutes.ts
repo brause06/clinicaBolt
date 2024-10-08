@@ -1,13 +1,15 @@
-import { Router } from "express"
-import { getAllMensajes, createMensaje, getMensajeById, updateMensaje, deleteMensaje } from "../controllers/mensajeController"
-import { auth, checkRole } from "../middleware/auth"
+import express from "express"
+import { getAllMensajes, getMensajeById, createMensaje, updateMensaje, deleteMensaje, getPacienteMensajes } from "../controllers/mensajeController"
+import { auth, roleAuth } from "../middleware/auth"
+import { UserRole } from "../types/roles"
 
-const router = Router()
+const router = express.Router()
 
-router.get("/", auth, getAllMensajes)
-router.post("/", auth, createMensaje)
-router.get("/:id", auth, getMensajeById)
-router.put("/:id", auth, checkRole(['admin', 'physiotherapist']), updateMensaje)
-router.delete("/:id", auth, checkRole(['admin']), deleteMensaje)
+router.get("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getAllMensajes)
+router.get("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getMensajeById)
+router.post("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), createMensaje)
+router.put("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), updateMensaje)
+router.delete("/:id", auth, roleAuth([UserRole.ADMIN]), deleteMensaje)
+router.get("/pacientes/:pacienteId", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getPacienteMensajes)
 
 export default router

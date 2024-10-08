@@ -1,9 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, OneToOne, JoinColumn } from "typeorm";
+import { Usuario } from "./Usuario";
+import { Cita } from "./Cita";
+import { Ejercicio } from "./Ejercicio";
 
-@Entity()
+@Entity("paciente")
 export class Paciente {
     @PrimaryGeneratedColumn()
     id!: number;
+
+    @OneToOne(() => Usuario)
+    @JoinColumn()
+    usuario!: Usuario;
 
     @Column()
     name!: string;
@@ -16,4 +23,12 @@ export class Paciente {
 
     @Column({ nullable: true })
     lastAppointment?: Date;
+
+    @OneToMany(() => Cita, cita => cita.patient)
+    citas!: Cita[];
+
+    @OneToMany(() => Ejercicio, ejercicio => ejercicio.patient)
+    ejercicios!: Ejercicio[];
+
+    
 }

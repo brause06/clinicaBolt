@@ -1,15 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { UserRole } from '../types/roles';
 
-interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    role: string;
-  };
+interface JwtPayload {
+  userId: number;
+  email: string;
+  role: UserRole;
 }
 
-export const auth = (req: AuthRequest, res: Response, next: NextFunction) => {
-  // Obtener el token del header de la petición
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
+}
+
+export const auth = (req: Request, res: Response, next: NextFunction) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
 
   if (!token) {
@@ -17,29 +24,19 @@ export const auth = (req: AuthRequest, res: Response, next: NextFunction) => {
   }
 
   try {
-    // Verificar el token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string; role: string };
-    
-    // Añadir la información del usuario a la petición
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'tu_clave_secreta_aqui') as JwtPayload;
     req.user = decoded;
-    
     next();
   } catch (error) {
     res.status(401).json({ message: 'Token inválido' });
   }
 };
 
-// Middleware para verificar roles
-export const checkRole = (roles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ message: 'No autenticado' });
+export const roleAuth = (roles: UserRole[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({ message: 'Acceso denegado' });
     }
-
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'No autorizado' });
-    }
-
     next();
   };
 };

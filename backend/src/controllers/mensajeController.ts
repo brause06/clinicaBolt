@@ -63,3 +63,22 @@ export const deleteMensaje = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error al eliminar mensaje" })
     }
 }
+
+export const getPacienteMensajes = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const mensajes = await mensajeRepository.find({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+
+        if (mensajes.length === 0) {
+            return res.status(404).json({ message: "No se encontraron mensajes para este paciente" });
+        }
+
+        res.json(mensajes);
+    } catch (error) {
+        console.error("Error al obtener los mensajes del paciente:", error);
+        res.status(500).json({ message: "Error al obtener los mensajes del paciente" });
+    }
+};

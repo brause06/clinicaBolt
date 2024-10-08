@@ -63,3 +63,22 @@ export const deleteProgreso = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error al eliminar progreso" })
     }
 }
+
+export const getPacienteProgresos = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const progresos = await progresoRepository.find({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+
+        if (progresos.length === 0) {
+            return res.status(404).json({ message: "No se encontraron progresos para este paciente" });
+        }
+
+        res.json(progresos);
+    } catch (error) {
+        console.error("Error al obtener los progresos del paciente:", error);
+        res.status(500).json({ message: "Error al obtener los progresos del paciente" });
+    }
+};

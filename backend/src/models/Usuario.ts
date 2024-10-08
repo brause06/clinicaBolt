@@ -1,19 +1,24 @@
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { UserRole } from "../types/roles"
 
 @Entity()
 export class Usuario {
     @PrimaryGeneratedColumn()
-    id!: number;
+    id!: number
 
     @Column()
-    username!: string;
+    username!: string
 
     @Column()
-    email!: string;
+    email!: string
 
     @Column()
-    password!: string;
+    password!: string
 
-    @Column()
-    role!: string;
+    @Column({
+        type: "varchar",  // Cambiamos el tipo a varchar
+        enum: UserRole,   // Mantenemos la validación de enum
+        default: UserRole.PACIENTE
+    })
+    role!: UserRole
 }

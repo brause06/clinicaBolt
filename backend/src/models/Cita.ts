@@ -9,7 +9,7 @@ export class Cita {
     @Column()
     date!: Date;
 
-    @ManyToOne(() => Paciente)
+    @ManyToOne(() => Paciente, paciente => paciente.citas)
     patient!: Paciente;
 
     @Column()

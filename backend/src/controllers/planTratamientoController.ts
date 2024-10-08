@@ -63,3 +63,22 @@ export const deletePlanTratamiento = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error al eliminar plan de tratamiento" })
     }
 }
+
+export const getPacientePlanesTratamiento = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const planesTratamiento = await planTratamientoRepository.find({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+
+        if (planesTratamiento.length === 0) {
+            return res.status(404).json({ message: "No se encontraron planes de tratamiento para este paciente" });
+        }
+
+        res.json(planesTratamiento);
+    } catch (error) {
+        console.error("Error al obtener los planes de tratamiento del paciente:", error);
+        res.status(500).json({ message: "Error al obtener los planes de tratamiento del paciente" });
+    }
+};

@@ -1,8 +1,10 @@
 import { Request, Response } from "express"
 import { AppDataSource } from "../config/database"
 import { Ejercicio } from "../models/Ejercicio"
+import { Paciente } from "../models/Paciente"
 
 const ejercicioRepository = AppDataSource.getRepository(Ejercicio)
+const pacienteRepository = AppDataSource.getRepository(Paciente)
 
 export const getAllEjercicios = async (req: Request, res: Response) => {
     try {
@@ -15,11 +17,32 @@ export const getAllEjercicios = async (req: Request, res: Response) => {
 
 export const createEjercicio = async (req: Request, res: Response) => {
     try {
-        const newEjercicio = ejercicioRepository.create(req.body)
-        const result = await ejercicioRepository.save(newEjercicio)
-        res.status(201).json(result)
+        console.log("Datos recibidos:", req.body);
+        const { name, description, duration, frequency, patientId } = req.body;
+
+        console.log("Buscando paciente con ID:", patientId);
+        const paciente = await pacienteRepository.findOne({ where: { id: patientId } });
+        if (!paciente) {
+            console.log("Paciente no encontrado");
+            return res.status(404).json({ message: "Paciente no encontrado" });
+        }
+        console.log("Paciente encontrado:", paciente);
+
+        const newEjercicio = ejercicioRepository.create({
+            name,
+            description,
+            duration,
+            frequency,
+            patient: paciente
+        });
+        console.log("Nuevo ejercicio creado:", newEjercicio);
+
+        const result = await ejercicioRepository.save(newEjercicio);
+        console.log("Ejercicio guardado:", result);
+        res.status(201).json(result);
     } catch (error) {
-        res.status(500).json({ message: "Error al crear ejercicio" })
+        console.error("Error al crear ejercicio:", error);
+        res.status(500).json({ message: "Error al crear ejercicio" });
     }
 }
 
@@ -63,3 +86,26 @@ export const deleteEjercicio = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error al eliminar ejercicio" })
     }
 }
+
+export const getPacienteEjercicios = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        console.log("Buscando ejercicios para el paciente con ID:", pacienteId);
+
+        const ejercicios = await ejercicioRepository.find({
+            where: { patient: { id: pacienteId } },
+            relations: ["patient"]
+        });
+
+        console.log("Ejercicios encontrados:", ejercicios);
+
+        if (ejercicios.length === 0) {
+            return res.status(404).json({ message: "No se encontraron ejercicios para este paciente" });
+        }
+
+        res.json(ejercicios);
+    } catch (error) {
+        console.error("Error al obtener los ejercicios del paciente:", error);
+        res.status(500).json({ message: "Error al obtener los ejercicios del paciente" });
+    }
+};

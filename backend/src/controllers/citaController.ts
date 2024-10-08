@@ -1,8 +1,10 @@
 import { Request, Response } from "express"
 import { AppDataSource } from "../config/database"
 import { Cita } from "../models/Cita"
+import { Paciente } from "../models/Paciente"
 
 const citaRepository = AppDataSource.getRepository(Cita)
+const pacienteRepository = AppDataSource.getRepository(Paciente)
 
 export const getAllCitas = async (req: Request, res: Response) => {
     try {
@@ -15,11 +17,27 @@ export const getAllCitas = async (req: Request, res: Response) => {
 
 export const createCita = async (req: Request, res: Response) => {
     try {
-        const newCita = citaRepository.create(req.body)
-        const result = await citaRepository.save(newCita)
-        res.status(201).json(result)
+        const { date, patientId, physicianName, status, notes } = req.body;
+
+        // Buscar el paciente
+        const paciente = await pacienteRepository.findOne({ where: { id: patientId } });
+        if (!paciente) {
+            return res.status(404).json({ message: "Paciente no encontrado" });
+        }
+
+        const newCita = citaRepository.create({
+            date: new Date(date),
+            patient: paciente,
+            physicianName,
+            status,
+            notes
+        });
+
+        const result = await citaRepository.save(newCita);
+        res.status(201).json(result);
     } catch (error) {
-        res.status(500).json({ message: "Error al crear cita" })
+        console.error("Error al crear cita:", error);
+        res.status(500).json({ message: "Error al crear cita" });
     }
 }
 

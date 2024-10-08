@@ -10,17 +10,14 @@ export class Ejercicio {
     name!: string;
 
     @Column()
+    description!: string;
+
+    @Column()
     duration!: string;
 
     @Column()
     frequency!: string;
 
-    @Column()
-    completed!: boolean;
-
-    @Column({ nullable: true })
-    lastCompleted?: Date;
-
-    @ManyToOne(() => Paciente)
+    @ManyToOne(() => Paciente, paciente => paciente.ejercicios)
     patient!: Paciente;
 }

@@ -1,56 +1,35 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: 'patient' | 'physiotherapist';
-};
-
-type AuthContextType = {
-  user: User | null;
-  login: (email: string, password: string) => boolean;
+export interface AuthContextType {
+  isAuthenticated: boolean;
+  login: (token: string) => void;
   logout: () => void;
-};
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | null>(null);
 
-const preloadedUsers: User[] = [
-  { id: '1', name: 'Juan Paciente', email: 'juan@example.com', role: 'patient' },
-  { id: '2', name: 'Ana Fisio', email: 'ana@example.com', role: 'physiotherapist' },
-];
-
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const navigate = useNavigate();
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
     }
   }, []);
 
-  const login = (email: string, password: string): boolean => {
-    const foundUser = preloadedUsers.find(u => u.email === email);
-    if (foundUser && password === 'password') { // Simple password check
-      setUser(foundUser);
-      localStorage.setItem('user', JSON.stringify(foundUser));
-      navigate('/dashboard');
-      return true;
-    }
-    return false;
+  const login = (token: string) => {
+    localStorage.setItem('token', token);
+    setIsAuthenticated(true);
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    navigate('/');
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -58,7 +37,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

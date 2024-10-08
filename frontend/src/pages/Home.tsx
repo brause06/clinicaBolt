@@ -1,9 +1,9 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../contexts/AuthContext';
 
 const Home = () => {
-  const { user } = useAuth()
+  const { isAuthenticated } = useAuth();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -30,7 +30,7 @@ const Home = () => {
         </div>
       </div>
       <div className="mt-8 text-center">
-        {user ? (
+        {isAuthenticated ? (
           <Link to="/dashboard" className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition duration-300 inline-block">
             Ir al Dashboard
           </Link>

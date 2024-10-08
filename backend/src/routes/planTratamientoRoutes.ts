@@ -1,13 +1,15 @@
 import express from "express"
-import { getAllPlanesTratamiento, createPlanTratamiento, getPlanTratamientoById, updatePlanTratamiento, deletePlanTratamiento } from "../controllers/planTratamientoController"
-import { auth, checkRole } from "../middleware/auth"
+import { getAllPlanesTratamiento, getPlanTratamientoById, createPlanTratamiento, updatePlanTratamiento, deletePlanTratamiento, getPacientePlanesTratamiento } from "../controllers/planTratamientoController"
+import { auth, roleAuth } from "../middleware/auth"
+import { UserRole } from "../types/roles"
 
 const router = express.Router()
 
-router.get("/", auth, getAllPlanesTratamiento)
-router.post("/", auth, checkRole(['admin', 'physiotherapist']), createPlanTratamiento)
-router.get("/:id", auth, getPlanTratamientoById)
-router.put("/:id", auth, checkRole(['admin', 'physiotherapist']), updatePlanTratamiento)
-router.delete("/:id", auth, checkRole(['admin']), deletePlanTratamiento)
+router.get("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getAllPlanesTratamiento)
+router.get("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getPlanTratamientoById)
+router.post("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), createPlanTratamiento)
+router.put("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), updatePlanTratamiento)
+router.delete("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), deletePlanTratamiento)
+router.get("/pacientes/:pacienteId", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getPacientePlanesTratamiento)
 
 export default router
