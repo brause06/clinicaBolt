@@ -17,7 +17,11 @@ const mockProgressData: ProgressData[] = [
   { date: '2023-05-01', painLevel: 4, mobility: 7, strength: 6 },
 ]
 
-const PatientProgress: React.FC = () => {
+interface PatientProgressProps {
+  patientId: string;
+}
+
+const PatientProgress: React.FC<PatientProgressProps> = ({ patientId }) => {
   const latestData = mockProgressData[mockProgressData.length - 1]
   const previousData = mockProgressData[mockProgressData.length - 2]
 
@@ -26,9 +30,15 @@ const PatientProgress: React.FC = () => {
     return change.toFixed(1)
   }
 
+  // Puedes usar patientId para cargar los datos de progreso específicos del paciente
+  // Por ejemplo:
+  // useEffect(() => {
+  //   loadProgressDataForPatient(patientId);
+  // }, [patientId]);
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-4">Tu Progreso</h2>
+      <h2 className="text-2xl font-semibold mb-4">Progreso del Paciente {patientId}</h2>
       <div className="grid grid-cols-3 gap-4 mb-6">
         <ProgressCard
           title="Nivel de Dolor"

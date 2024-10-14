@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FileText, Plus } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { UserRole } from '../types/user';
 
 interface MedicalRecord {
   id: string;
@@ -9,13 +10,23 @@ interface MedicalRecord {
   treatment: string;
 }
 
-const MedicalHistory = () => {
+interface MedicalHistoryProps {
+  patientId: string;
+}
+
+const MedicalHistory: React.FC<MedicalHistoryProps> = ({ patientId }) => {
   const { user } = useAuth()
   const [records, setRecords] = useState<MedicalRecord[]>([
     { id: '1', date: '2023-03-15', diagnosis: 'Esguince de tobillo', treatment: 'Fisioterapia y reposo' },
     { id: '2', date: '2023-01-10', diagnosis: 'Dolor lumbar', treatment: 'Ejercicios de fortalecimiento' },
   ])
   const [newRecord, setNewRecord] = useState({ date: '', diagnosis: '', treatment: '' })
+
+  useEffect(() => {
+    // Cargar historial médico específico del paciente usando patientId
+    console.log(`Cargando historial médico para el paciente ${patientId}`);
+    // ... lógica para cargar historial médico ...
+  }, [patientId]);
 
   const handleAddRecord = (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,7 +51,7 @@ const MedicalHistory = () => {
           </div>
         ))}
       </div>
-      {user?.role === 'physiotherapist' && (
+      {user?.role === UserRole.FISIOTERAPEUTA && (
         <form onSubmit={handleAddRecord} className="mt-6 space-y-4">
           <h3 className="text-xl font-semibold mb-2">Agregar Nuevo Registro</h3>
           <div>

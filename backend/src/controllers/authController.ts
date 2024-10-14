@@ -67,12 +67,14 @@ export const login = async (req: Request, res: Response) => {
     // Buscar el usuario por email
     const user = await userRepository.findOne({ where: { email } });
     if (!user) {
+      console.log("Usuario no encontrado");
       return res.status(401).json({ message: "Credenciales inválidas" });
     }
 
     // Verificar la contraseña
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
+      console.log("Contraseña inválida");
       return res.status(401).json({ message: "Credenciales inválidas" });
     }
 
@@ -84,7 +86,7 @@ export const login = async (req: Request, res: Response) => {
     );
 
     console.log("Token generado:", token);
-    res.json({ token, userId: user.id, role: user.role });
+    res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
   } catch (error) {
     console.error("Error en el controlador de login:", error);
     res.status(500).json({ message: "Error al iniciar sesión" });

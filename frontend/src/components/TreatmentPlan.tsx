@@ -1,8 +1,20 @@
 import React, { useState } from 'react'
 import { Clipboard, Plus } from 'lucide-react'
 
-const TreatmentPlan = () => {
-  const [treatments, setTreatments] = useState([
+// Añade una interfaz para el tipo de tratamiento
+interface Treatment {
+  id: number;
+  name: string;
+  duration: string;
+  frequency: string;
+}
+
+interface TreatmentPlanProps {
+  patientId: string;
+}
+
+const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId }) => {
+  const [treatments, setTreatments] = useState<Treatment[]>([
     { id: 1, name: 'Terapia manual', duration: '30 minutos', frequency: '2 veces por semana' },
     { id: 2, name: 'Ejercicios de fortalecimiento', duration: '45 minutos', frequency: '3 veces por semana' },
   ])
@@ -17,9 +29,15 @@ const TreatmentPlan = () => {
     }
   }
 
+  // Puedes usar patientId para cargar los tratamientos específicos del paciente
+  // Por ejemplo:
+  // useEffect(() => {
+  //   loadTreatmentsForPatient(patientId);
+  // }, [patientId]);
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-4">Plan de Tratamiento</h2>
+      <h2 className="text-2xl font-semibold mb-4">Plan de Tratamiento para Paciente {patientId}</h2>
       <div className="space-y-4 mb-6">
         {treatments.map((treatment) => (
           <div key={treatment.id} className="border-b pb-4">

@@ -8,17 +8,21 @@ interface Goal {
   completed: boolean;
 }
 
-const TreatmentGoals = () => {
+interface TreatmentGoalsProps {
+  patientId: string;
+}
+
+const TreatmentGoals: React.FC<TreatmentGoalsProps> = ({ patientId }) => {
   const [goals, setGoals] = useState<Goal[]>([
     { id: '1', description: 'Aumentar la flexibilidad de la espalda en un 20%', targetDate: '2023-06-30', completed: false },
     { id: '2', description: 'Reducir el dolor lumbar a un nivel 2/10', targetDate: '2023-07-15', completed: false },
   ])
   const [newGoal, setNewGoal] = useState({ description: '', targetDate: '' })
 
-  const handleAddGoal = (e: React.FormEvent) => {
+  const handleAddGoal = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (newGoal.description && newGoal.targetDate) {
-      setGoals([...goals, { id: Date.now().toString(), ...newGoal, completed: false }])
+      setGoals(prevGoals => [...prevGoals, { id: Date.now().toString(), ...newGoal, completed: false }])
       setNewGoal({ description: '', targetDate: '' })
     }
   }
@@ -29,9 +33,15 @@ const TreatmentGoals = () => {
     ))
   }
 
+  // Puedes usar patientId para cargar los objetivos específicos del paciente
+  // Por ejemplo:
+  // useEffect(() => {
+  //   loadGoalsForPatient(patientId);
+  // }, [patientId]);
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-4">Objetivos del Tratamiento</h2>
+      <h2 className="text-2xl font-semibold mb-4">Objetivos del Tratamiento para Paciente {patientId}</h2>
       <div className="space-y-4">
         {goals.map((goal) => (
           <div key={goal.id} className="flex items-center justify-between border-b pb-4">

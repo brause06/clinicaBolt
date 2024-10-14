@@ -1,8 +1,14 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { User, UserRole } from '../types/user'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+interface LoginResponse {
+  token: string;
+  user: User;
+}
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -15,8 +21,7 @@ const Login = () => {
     e.preventDefault();
     setError('');
     try {
-      console.log('Iniciando solicitud de login...');
-      const response = await fetch(`${API_URL}/api/login`, {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -25,13 +30,22 @@ const Login = () => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      console.log('Datos de respuesta:', data);
-      if (data.token) {
-        login(data.token);
-        navigate('/dashboard');
+      const data: LoginResponse = await response.json();
+      if (data.token && data.user) {
+        login(data.token, data.user);
+        
+        // Aquí podrías usar UserRole si necesitas redirigir basado en el rol
+        switch(data.user.role) {
+          case UserRole.PACIENTE:
+          case UserRole.FISIOTERAPEUTA:
+          case UserRole.ADMIN:
+            navigate('/dashboard');
+            break;
+          default:
+            navigate('/dashboard');
+        }
       } else {
-        throw new Error('Token no recibido');
+        throw new Error('Datos de inicio de sesión inválidos');
       }
     } catch (err) {
       console.error('Error completo:', err);

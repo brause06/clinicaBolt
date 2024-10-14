@@ -1,20 +1,42 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { register } from '../api/authService'
+import { UserRole, User } from '../types/user'
 
 const Register = () => {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [userType, setUserType] = useState('patient')
+  const [userType, setUserType] = useState<UserRole>(UserRole.PACIENTE)
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Aquí iría la lógica de registro
-    console.log('Register attempt', { name, email, password, userType })
+    setError('')
+    try {
+      const userData: User = {
+        username: name,
+        email,
+        password,
+        role: userType
+      }
+      const response = await register(userData)
+      console.log('Register successful', response)
+      navigate('/login')
+    } catch (err) {
+      setError('Registration failed. Please try again.')
+      console.error('Register error:', err, error)
+    }
   }
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)
+
+
   return (
-    <div className="container mx-auto px-4 py-8">
+<div className="container mx-auto px-4 py-8">
       <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Registro</h2>
         <form onSubmit={handleSubmit}>
@@ -25,7 +47,7 @@ const Register = () => {
               id="name"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={handleNameChange}
               required
             />
           </div>
@@ -36,7 +58,7 @@ const Register = () => {
               id="email"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               required
             />
           </div>
@@ -47,7 +69,7 @@ const Register = () => {
               id="password"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               required
             />
           </div>
@@ -58,8 +80,8 @@ const Register = () => {
                 <input
                   type="radio"
                   value="patient"
-                  checked={userType === 'patient'}
-                  onChange={() => setUserType('patient')}
+                  checked={userType === UserRole.PACIENTE}
+                  onChange={() => setUserType(UserRole.PACIENTE)}
                   className="mr-2"
                 />
                 Paciente
@@ -68,8 +90,8 @@ const Register = () => {
                 <input
                   type="radio"
                   value="physiotherapist"
-                  checked={userType === 'physiotherapist'}
-                  onChange={() => setUserType('physiotherapist')}
+                  checked={userType === UserRole.FISIOTERAPEUTA}
+                  onChange={() => setUserType(UserRole.FISIOTERAPEUTA)}
                   className="mr-2"
                 />
                 Fisioterapeuta

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Activity, Plus, Check, X, Bell } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { UserRole } from '../types/user';
 
 interface Exercise {
   id: string;
@@ -11,7 +12,11 @@ interface Exercise {
   lastCompleted?: Date;
 }
 
-const ExercisePlan = () => {
+interface ExercisePlanProps {
+  patientId: string;
+}
+
+const ExercisePlan: React.FC<ExercisePlanProps> = ({ patientId }) => {
   const { user } = useAuth()
   const [exercises, setExercises] = useState<Exercise[]>([
     { id: '1', name: 'Estiramiento de isquiotibiales', duration: '10 minutos', frequency: 'Diario', completed: false },
@@ -40,6 +45,12 @@ const ExercisePlan = () => {
     const intervalId = setInterval(checkExerciseReminders, 60000) // Check every minute
     return () => clearInterval(intervalId)
   }, [exercises])
+
+  useEffect(() => {
+    // Cargar ejercicios específicos del paciente usando patientId
+    console.log(`Cargando ejercicios para el paciente ${patientId}`);
+    // ... lógica para cargar ejercicios ...
+  }, [patientId]);
 
   const handleAddExercise = (e: React.FormEvent) => {
     e.preventDefault()
@@ -87,7 +98,7 @@ const ExercisePlan = () => {
                 </p>
               )}
             </div>
-            {user?.role === 'patient' && (
+            {user?.role === UserRole.PACIENTE && (
               <button
                 onClick={() => toggleExerciseCompletion(exercise.id)}
                 className={`p-2 rounded-full ${exercise.completed ? 'bg-green-500' : 'bg-gray-200'}`}
@@ -98,7 +109,7 @@ const ExercisePlan = () => {
           </div>
         ))}
       </div>
-      {user?.role === 'physiotherapist' && (
+      {user?.role === UserRole.FISIOTERAPEUTA && (
         <form onSubmit={handleAddExercise} className="mt-6 space-y-4">
           <h3 className="text-xl font-semibold mb-2">Agregar Nuevo Ejercicio</h3>
           <input

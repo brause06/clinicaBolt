@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Calendar, FileText, Activity, MessageSquare, User, Users, BarChart, TrendingUp, Target, ClipboardList, Menu, ChevronLeft } from 'lucide-react'
 import AppointmentScheduler from '../components/AppointmentScheduler'
 import MedicalHistory from '../components/MedicalHistory'
@@ -11,7 +11,6 @@ import TreatmentGoals from '../components/TreatmentGoals'
 import DashboardNavItem from '../components/DashboardNavItem'
 import UserProfile from '../components/UserProfile'
 import ActivitySummary from '../components/ActivitySummary'
-import { useAuth } from '../contexts/AuthContext'
 
 interface Patient {
   id: string;
@@ -22,7 +21,6 @@ interface Patient {
 }
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth()
   const [activeComponent, setActiveComponent] = useState<string>('summary')
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
@@ -82,15 +80,13 @@ const Dashboard: React.FC = () => {
             onClick={() => setActiveComponent('summary')}
             showTitle={isSidebarOpen}
           />
-          {user?.role === 'physiotherapist' && (
-            <DashboardNavItem
-              icon={<Users size={24} />}
-              title="Pacientes"
-              active={activeComponent === 'patients'}
-              onClick={() => setActiveComponent('patients')}
-              showTitle={isSidebarOpen}
-            />
-          )}
+          <DashboardNavItem
+            icon={<Users size={24} />}
+            title="Pacientes"
+            active={activeComponent === 'patients'}
+            onClick={() => setActiveComponent('patients')}
+            showTitle={isSidebarOpen}
+          />
           <DashboardNavItem
             icon={<Calendar size={24} />}
             title="Citas"
@@ -119,31 +115,27 @@ const Dashboard: React.FC = () => {
             onClick={() => setActiveComponent('chat')}
             showTitle={isSidebarOpen}
           />
-          {user?.role === 'physiotherapist' && (
-            <>
-              <DashboardNavItem
-                icon={<ClipboardList size={24} />}
-                title="Plan de Tratamiento"
-                active={activeComponent === 'treatment-plan'}
-                onClick={() => setActiveComponent('treatment-plan')}
-                showTitle={isSidebarOpen}
-              />
-              <DashboardNavItem
-                icon={<TrendingUp size={24} />}
-                title="Progreso del Paciente"
-                active={activeComponent === 'progress'}
-                onClick={() => setActiveComponent('progress')}
-                showTitle={isSidebarOpen}
-              />
-              <DashboardNavItem
-                icon={<Target size={24} />}
-                title="Objetivos de Tratamiento"
-                active={activeComponent === 'goals'}
-                onClick={() => setActiveComponent('goals')}
-                showTitle={isSidebarOpen}
-              />
-            </>
-          )}
+          <DashboardNavItem
+            icon={<ClipboardList size={24} />}
+            title="Plan de Tratamiento"
+            active={activeComponent === 'treatment-plan'}
+            onClick={() => setActiveComponent('treatment-plan')}
+            showTitle={isSidebarOpen}
+          />
+          <DashboardNavItem
+            icon={<TrendingUp size={24} />}
+            title="Progreso del Paciente"
+            active={activeComponent === 'progress'}
+            onClick={() => setActiveComponent('progress')}
+            showTitle={isSidebarOpen}
+          />
+          <DashboardNavItem
+            icon={<Target size={24} />}
+            title="Objetivos de Tratamiento"
+            active={activeComponent === 'goals'}
+            onClick={() => setActiveComponent('goals')}
+            showTitle={isSidebarOpen}
+          />
           <DashboardNavItem
             icon={<User size={24} />}
             title="Perfil"
