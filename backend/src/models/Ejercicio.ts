@@ -18,6 +18,18 @@ export class Ejercicio {
     @Column()
     frequency!: string;
 
+    @Column({ nullable: true })
+    videoUrl?: string;
+
+    @Column({ nullable: true })
+    imageUrl?: string;
+
+    @Column({ default: false })
+    completed!: boolean;
+
+    @Column({ type: 'datetime', nullable: true })
+    lastCompleted?: Date;
+
     @ManyToOne(() => Paciente, paciente => paciente.ejercicios)
     patient!: Paciente;
 }

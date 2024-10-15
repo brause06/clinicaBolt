@@ -10,6 +10,9 @@ router.get("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, User
 router.post("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), createPlanTratamiento)
 router.put("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), updatePlanTratamiento)
 router.delete("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), deletePlanTratamiento)
-router.get("/pacientes/:pacienteId", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getPacientePlanesTratamiento)
+router.get("/pacientes/:pacienteId", (req, res, next) => {
+  console.log('Recibida solicitud para planes de tratamiento del paciente:', req.params.pacienteId);
+  next();
+}, auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getPacientePlanesTratamiento)
 
 export default router

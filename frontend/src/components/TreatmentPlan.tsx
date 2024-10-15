@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Clipboard, Plus } from 'lucide-react'
+import api from '../api/api'
 
 // Añade una interfaz para el tipo de tratamiento
 interface Treatment {
@@ -10,36 +11,66 @@ interface Treatment {
 }
 
 interface TreatmentPlanProps {
-  patientId: string;
+  patientId: number;
 }
 
 const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId }) => {
-  const [treatments, setTreatments] = useState<Treatment[]>([
-    { id: 1, name: 'Terapia manual', duration: '30 minutos', frequency: '2 veces por semana' },
-    { id: 2, name: 'Ejercicios de fortalecimiento', duration: '45 minutos', frequency: '3 veces por semana' },
-  ])
-
+  const [treatments, setTreatments] = useState<Treatment[]>([])
   const [newTreatment, setNewTreatment] = useState({ name: '', duration: '', frequency: '' })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleAddTreatment = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newTreatment.name && newTreatment.duration && newTreatment.frequency) {
-      setTreatments([...treatments, { id: Date.now(), ...newTreatment }])
-      setNewTreatment({ name: '', duration: '', frequency: '' })
+  useEffect(() => {
+    const fetchTreatments = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await api.get(`/planes-tratamiento/pacientes/${patientId}`);
+        console.log('API response:', response.data);
+        setTreatments(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error('Error al obtener los tratamientos:', error);
+        setError('Error al cargar los tratamientos');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (patientId) {
+      fetchTreatments();
     }
-  }
+  }, [patientId]);
 
-  // Puedes usar patientId para cargar los tratamientos específicos del paciente
-  // Por ejemplo:
-  // useEffect(() => {
-  //   loadTreatmentsForPatient(patientId);
-  // }, [patientId]);
+  const handleAddTreatment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newTreatment.name && newTreatment.duration && newTreatment.frequency) {
+      try {
+        const response = await api.post('/planes-tratamiento', {
+          ...newTreatment,
+          patientId: patientId
+        });
+        setTreatments([...treatments, response.data]);
+        setNewTreatment({ name: '', duration: '', frequency: '' });
+      } catch (error) {
+        console.error('Error al agregar el tratamiento:', error);
+        setError('Error al agregar el tratamiento');
+      }
+    }
+  };
+
+  if (!Array.isArray(treatments)) {
+    console.error('treatments is not an array:', treatments);
+    return <div>Error: Los tratamientos no son válidos</div>;
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">Plan de Tratamiento para Paciente {patientId}</h2>
+      {isLoading && <p>Cargando planes de tratamiento...</p>}
+      {error && <p className="text-red-500">{error}</p>}
+      {!isLoading && !error && treatments.length === 0 && <p>No hay planes de tratamiento para este paciente.</p>}
       <div className="space-y-4 mb-6">
-        {treatments.map((treatment) => (
+        {Array.isArray(treatments) && treatments.map((treatment) => (
           <div key={treatment.id} className="border-b pb-4">
             <div className="flex items-center space-x-2 mb-2">
               <Clipboard className="w-5 h-5 text-blue-500" />

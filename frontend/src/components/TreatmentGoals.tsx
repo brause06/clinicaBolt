@@ -1,88 +1,136 @@
-import React, { useState } from 'react'
-import { Target, Plus, Check, X } from 'lucide-react'
-
-interface Goal {
-  id: string;
-  description: string;
-  targetDate: string;
-  completed: boolean;
-}
+import React, { useState, useEffect } from 'react';
+import api from '../api/api'; // Importa la instancia de api en lugar de axios
+import { Objetivo } from '../types/objetivo';
 
 interface TreatmentGoalsProps {
-  patientId: string;
+  patientId: number;
 }
 
 const TreatmentGoals: React.FC<TreatmentGoalsProps> = ({ patientId }) => {
-  const [goals, setGoals] = useState<Goal[]>([
-    { id: '1', description: 'Aumentar la flexibilidad de la espalda en un 20%', targetDate: '2023-06-30', completed: false },
-    { id: '2', description: 'Reducir el dolor lumbar a un nivel 2/10', targetDate: '2023-07-15', completed: false },
-  ])
-  const [newGoal, setNewGoal] = useState({ description: '', targetDate: '' })
+  const [goals, setGoals] = useState<Objetivo[]>([]);
+  const [newGoal, setNewGoal] = useState<Partial<Objetivo>>({ description: '', targetDate: '', progressPercentage: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAddGoal = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (newGoal.description && newGoal.targetDate) {
-      setGoals(prevGoals => [...prevGoals, { id: Date.now().toString(), ...newGoal, completed: false }])
-      setNewGoal({ description: '', targetDate: '' })
+  useEffect(() => {
+    fetchGoals();
+  }, [patientId]);
+
+  const fetchGoals = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/objetivos/patient/${patientId}`);
+      setGoals(response.data);
+    } catch (err) {
+      setError('Error al cargar los objetivos');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  const toggleGoalCompletion = (id: string) => {
-    setGoals(goals.map(goal => 
-      goal.id === id ? { ...goal, completed: !goal.completed } : goal
-    ))
-  }
+  const handleAddGoal = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (newGoal.description && newGoal.targetDate) {
+      try {
+        const response = await api.post('/objetivos', { ...newGoal, patientId });
+        setGoals(prevGoals => [...prevGoals, response.data]);
+        setNewGoal({ description: '', targetDate: '', progressPercentage: 0 });
+      } catch (err) {
+        setError('Error al añadir el objetivo');
+        console.error(err);
+      }
+    }
+  };
 
-  // Puedes usar patientId para cargar los objetivos específicos del paciente
-  // Por ejemplo:
-  // useEffect(() => {
-  //   loadGoalsForPatient(patientId);
-  // }, [patientId]);
+  const handleUpdateGoal = async (id: number, updates: Partial<Objetivo>) => {
+    try {
+      const response = await api.put(`/objetivos/${id}`, updates);
+      setGoals(goals.map(goal => goal.id === id ? response.data : goal));
+    } catch (err) {
+      setError('Error al actualizar el objetivo');
+      console.error(err);
+    }
+  };
+
+  const handleDeleteGoal = async (id: number) => {
+    try {
+      await api.delete(`/objetivos/${id}`);
+      setGoals(goals.filter(goal => goal.id !== id));
+    } catch (err) {
+      setError('Error al eliminar el objetivo');
+      console.error(err);
+    }
+  };
+
+  if (loading) return <div>Cargando objetivos...</div>;
+  if (error) return <div>{error}</div>;
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-4">Objetivos del Tratamiento para Paciente {patientId}</h2>
-      <div className="space-y-4">
-        {goals.map((goal) => (
-          <div key={goal.id} className="flex items-center justify-between border-b pb-4">
-            <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <Target className="w-5 h-5 text-blue-500" />
-                <span className="font-medium">{goal.description}</span>
-              </div>
-              <p className="text-sm text-gray-600">Fecha objetivo: {goal.targetDate}</p>
-            </div>
-            <button
-              onClick={() => toggleGoalCompletion(goal.id)}
-              className={`p-2 rounded-full ${goal.completed ? 'bg-green-500' : 'bg-gray-200'}`}
-            >
-              {goal.completed ? <Check className="w-5 h-5 text-white" /> : <X className="w-5 h-5 text-gray-500" />}
-            </button>
-          </div>
-        ))}
-      </div>
-      <form onSubmit={handleAddGoal} className="mt-6 space-y-4">
+      <h2 className="text-2xl font-semibold mb-4">Objetivos del Tratamiento</h2>
+      
+      <form onSubmit={handleAddGoal} className="mb-6">
         <input
           type="text"
-          placeholder="Descripción del objetivo"
           value={newGoal.description}
-          onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })}
-          className="w-full border rounded-md p-2"
-          required
+          onChange={(e) => setNewGoal({...newGoal, description: e.target.value})}
+          placeholder="Descripción del objetivo"
+          className="w-full p-2 mb-2 border rounded"
         />
         <input
           type="date"
           value={newGoal.targetDate}
-          onChange={(e) => setNewGoal({ ...newGoal, targetDate: e.target.value })}
-          className="w-full border rounded-md p-2"
-          required
+          onChange={(e) => setNewGoal({...newGoal, targetDate: e.target.value})}
+          className="w-full p-2 mb-2 border rounded"
         />
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300 flex items-center">
-          <Plus className="w-5 h-5 mr-2" /> Agregar Objetivo
+        <input
+          type="number"
+          value={newGoal.progressPercentage}
+          onChange={(e) => setNewGoal({...newGoal, progressPercentage: Number(e.target.value)})}
+          placeholder="Progreso (%)"
+          className="w-full p-2 mb-2 border rounded"
+        />
+        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+          Añadir Objetivo
         </button>
       </form>
-    </div>
-  )
-}
 
-export default TreatmentGoals
+      <div className="space-y-4">
+        {goals.map((goal) => (
+          <div key={goal.id} className="border p-4 rounded">
+            <h3 className="font-semibold">{goal.description}</h3>
+            <p>Fecha objetivo: {new Date(goal.targetDate).toLocaleDateString()}</p>
+            <p>Progreso: {goal.progressPercentage || 0}%</p>
+            <div className="mt-2">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={goal.progressPercentage || 0}
+                onChange={(e) => handleUpdateGoal(goal.id, { progressPercentage: Number(e.target.value) })}
+                className="w-full"
+              />
+            </div>
+            <div className="mt-2 flex justify-between">
+              <button
+                onClick={() => handleUpdateGoal(goal.id, { completed: !goal.completed })}
+                className={`px-2 py-1 rounded ${goal.completed ? 'bg-green-500' : 'bg-gray-300'}`}
+              >
+                {goal.completed ? 'Completado' : 'Marcar como completado'}
+              </button>
+              <button
+                onClick={() => handleDeleteGoal(goal.id)}
+                className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default TreatmentGoals;

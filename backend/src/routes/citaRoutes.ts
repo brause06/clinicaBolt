@@ -1,5 +1,5 @@
 import express from "express"
-import { getAllCitas, getCitaById, createCita, updateCita, deleteCita } from "../controllers/citaController"
+import { getAllCitas, getCitaById, createCita, updateCita, deleteCita, getCitasByPatient } from "../controllers/citaController"
 import { auth, roleAuth } from "../middleware/auth"
 import { UserRole } from "../types/roles"
 
@@ -10,5 +10,6 @@ router.get("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, User
 router.post("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), createCita)
 router.put("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), updateCita)
 router.delete("/:id", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), deleteCita)
+router.get("/patient/:patientId", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getCitasByPatient)
 
 export default router

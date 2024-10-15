@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 //import { UserRegistrationData } from '../types/user';
 
 const API_URL = 'http://localhost:3000/api';
@@ -10,17 +11,14 @@ const api = axios.create({
   },
 });
 
-// Interceptor para añadir el token a las peticiones
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// Función para actualizar el token
+export const setAuthToken = (token: string | null) => {
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+  }
+};
 
 export default api;
 
@@ -52,3 +50,4 @@ export default api;
 //};
 
 // Añade más funciones para otras llamadas a la API según sea necesario
+

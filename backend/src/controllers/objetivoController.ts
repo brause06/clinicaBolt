@@ -1,25 +1,44 @@
 import { Request, Response } from "express"
 import { AppDataSource } from "../config/database"
 import { Objetivo } from "../models/Objetivo"
+import { Paciente } from "../models/Paciente"
 
 const objetivoRepository = AppDataSource.getRepository(Objetivo)
+const pacienteRepository = AppDataSource.getRepository(Paciente)
 
 export const getAllObjetivos = async (req: Request, res: Response) => {
     try {
         const objetivos = await objetivoRepository.find({ relations: ["patient"] })
         res.json(objetivos)
     } catch (error) {
+        console.error("Error al obtener objetivos:", error)
         res.status(500).json({ message: "Error al obtener objetivos" })
     }
 }
 
 export const createObjetivo = async (req: Request, res: Response) => {
     try {
-        const newObjetivo = objetivoRepository.create(req.body)
-        const result = await objetivoRepository.save(newObjetivo)
-        res.status(201).json(result)
+        const { description, targetDate, patientId, notes, progressPercentage } = req.body;
+
+        const paciente = await pacienteRepository.findOne({ where: { id: patientId } });
+        if (!paciente) {
+            return res.status(404).json({ message: "Paciente no encontrado" });
+        }
+
+        const newObjetivo = objetivoRepository.create({
+            description,
+            targetDate: new Date(targetDate),
+            completed: false,
+            notes,
+            progressPercentage,
+            patient: paciente
+        });
+
+        const result = await objetivoRepository.save(newObjetivo);
+        res.status(201).json(result);
     } catch (error) {
-        res.status(500).json({ message: "Error al crear objetivo" })
+        console.error("Error al crear objetivo:", error);
+        res.status(500).json({ message: "Error al crear objetivo" });
     }
 }
 
@@ -40,45 +59,54 @@ export const getObjetivoById = async (req: Request, res: Response) => {
 
 export const updateObjetivo = async (req: Request, res: Response) => {
     try {
-        const objetivo = await objetivoRepository.findOneBy({ id: parseInt(req.params.id) })
+        const objetivoId = parseInt(req.params.id);
+        const { description, targetDate, completed, completionDate, progressPercentage, notes } = req.body;
+
+        const objetivo = await objetivoRepository.findOne({ where: { id: objetivoId }, relations: ["patient"] });
         if (!objetivo) {
-            return res.status(404).json({ message: "Objetivo no encontrado" })
+            return res.status(404).json({ message: "Objetivo no encontrado" });
         }
-        objetivoRepository.merge(objetivo, req.body)
-        const result = await objetivoRepository.save(objetivo)
-        res.json(result)
+
+        objetivo.description = description || objetivo.description;
+        objetivo.targetDate = targetDate ? new Date(targetDate) : objetivo.targetDate;
+        objetivo.completed = completed !== undefined ? completed : objetivo.completed;
+        objetivo.completionDate = completionDate ? new Date(completionDate) : objetivo.completionDate;
+        objetivo.progressPercentage = progressPercentage !== undefined ? progressPercentage : objetivo.progressPercentage;
+        objetivo.notes = notes || objetivo.notes;
+
+        const updatedObjetivo = await objetivoRepository.save(objetivo);
+        res.json(updatedObjetivo);
     } catch (error) {
-        res.status(500).json({ message: "Error al actualizar objetivo" })
+        console.error("Error al actualizar objetivo:", error);
+        res.status(500).json({ message: "Error al actualizar objetivo" });
     }
 }
 
 export const deleteObjetivo = async (req: Request, res: Response) => {
     try {
-        const result = await objetivoRepository.delete(req.params.id)
-        if (result.affected === 0) {
-            return res.status(404).json({ message: "Objetivo no encontrado" })
+        const objetivoId = parseInt(req.params.id);
+        const objetivo = await objetivoRepository.findOne({ where: { id: objetivoId } });
+        if (!objetivo) {
+            return res.status(404).json({ message: "Objetivo no encontrado" });
         }
-        res.status(204).send()
+        await objetivoRepository.remove(objetivo);
+        res.json({ message: "Objetivo eliminado con éxito" });
     } catch (error) {
-        res.status(500).json({ message: "Error al eliminar objetivo" })
+        console.error("Error al eliminar objetivo:", error);
+        res.status(500).json({ message: "Error al eliminar objetivo" });
     }
 }
 
-export const getPacienteObjetivos = async (req: Request, res: Response) => {
+export const getObjetivosByPatient = async (req: Request, res: Response) => {
     try {
-        const pacienteId = parseInt(req.params.pacienteId);
+        const patientId = parseInt(req.params.patientId);
         const objetivos = await objetivoRepository.find({
-            where: { patient: { id: pacienteId } },
+            where: { patient: { id: patientId } },
             relations: ["patient"]
         });
-
-        if (objetivos.length === 0) {
-            return res.status(404).json({ message: "No se encontraron objetivos para este paciente" });
-        }
-
         res.json(objetivos);
     } catch (error) {
-        console.error("Error al obtener los objetivos del paciente:", error);
-        res.status(500).json({ message: "Error al obtener los objetivos del paciente" });
+        console.error("Error al obtener objetivos del paciente:", error);
+        res.status(500).json({ message: "Error al obtener objetivos del paciente" });
     }
-};
+}

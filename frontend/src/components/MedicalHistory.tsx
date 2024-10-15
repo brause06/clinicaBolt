@@ -11,7 +11,7 @@ interface MedicalRecord {
 }
 
 interface MedicalHistoryProps {
-  patientId: string;
+  patientId: number;
 }
 
 const MedicalHistory: React.FC<MedicalHistoryProps> = ({ patientId }) => {

@@ -1,18 +1,28 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 
-const AddPatient = () => {
-  const [name, setName] = useState('')
-  const [age, setAge] = useState('')
-  const [condition, setCondition] = useState('')
+const AddPatient: React.FC = () => {
   const navigate = useNavigate()
+  const [patient, setPatient] = useState({
+    name: '',
+    age: 0,
+    condition: ''
+  })
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Aquí iría la lógica para agregar el paciente a la base de datos
-    console.log('Nuevo paciente:', { name, age, condition })
-    // Redirigir a la lista de pacientes después de agregar
-    navigate('/dashboard')
+    try {
+      const token = localStorage.getItem('token')
+      await axios.post('/api/pacientes', patient, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      navigate('/dashboard', { state: { message: 'Paciente agregado exitosamente' } })
+    } catch (error) {
+      console.error('Error adding patient:', error)
+      setError('Error al agregar el paciente')
+    }
   }
 
   return (
@@ -25,8 +35,8 @@ const AddPatient = () => {
             <input
               type="text"
               id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={patient.name}
+              onChange={(e) => setPatient({ ...patient, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -36,24 +46,24 @@ const AddPatient = () => {
             <input
               type="number"
               id="age"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
+              value={patient.age}
+              onChange={(e) => setPatient({ ...patient, age: parseInt(e.target.value) })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
-          <div className="mb-6">
+          <div className="mb-4">
             <label htmlFor="condition" className="block mb-2 text-sm font-medium text-gray-600">Condición</label>
             <input
               type="text"
               id="condition"
-              value={condition}
-              onChange={(e) => setCondition(e.target.value)}
+              value={patient.condition}
+              onChange={(e) => setPatient({ ...patient, condition: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-300">
+          <button type="submit" className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
             Agregar Paciente
           </button>
         </form>

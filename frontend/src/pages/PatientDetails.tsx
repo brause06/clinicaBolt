@@ -1,19 +1,46 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Calendar, FileText, Activity } from 'lucide-react'
+import axios from 'axios'
+
+interface PatientDetails {
+  id: number
+  name: string
+  age: number
+  condition: string
+  lastAppointment: string
+  nextAppointment: string
+  treatmentPlan: string
+}
 
 const PatientDetails = () => {
   const { id } = useParams<{ id: string }>()
-  // Aquí normalmente cargarías los detalles del paciente desde una API o base de datos
-  const patient = {
-    id: Number(id),
-    name: 'Ana Martínez',
-    age: 35,
-    condition: 'Lumbalgia',
-    lastAppointment: '2023-04-15',
-    nextAppointment: '2023-05-01',
-    treatmentPlan: 'Ejercicios de fortalecimiento lumbar y terapia manual',
-  }
+  const [patient, setPatient] = useState<PatientDetails | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPatientDetails = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await axios.get(`/api/pacientes/${id}/details`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        setPatient(response.data)
+      } catch (error) {
+        console.error('Error fetching patient details:', error)
+        setError('Error al cargar los detalles del paciente')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchPatientDetails()
+  }, [id])
+
+  if (loading) return <div>Cargando...</div>
+  if (error) return <div>{error}</div>
+  if (!patient) return <div>No se encontró el paciente</div>
 
   return (
     <div className="container mx-auto px-4 py-8">

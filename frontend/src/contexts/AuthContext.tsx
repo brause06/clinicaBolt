@@ -1,8 +1,10 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { User } from '../types/user';
+import { setAuthToken } from '../api/api';
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   login: (token: string, userData: User) => void;
   logout: () => void;
@@ -16,34 +18,41 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    if (token && storedUser) {
+    if (storedToken && storedUser) {
       const userData: User = JSON.parse(storedUser);
       setUser(userData);
+      setToken(storedToken);
       setIsAuthenticated(true);
+      setAuthToken(storedToken);
     }
   }, []);
 
-  const login = (token: string, userData: User) => {
-    localStorage.setItem('token', token);
+  const login = (newToken: string, userData: User) => {
+    localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
+    setToken(newToken);
     setIsAuthenticated(true);
+    setAuthToken(newToken);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    setToken(null);
     setIsAuthenticated(false);
+    setAuthToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

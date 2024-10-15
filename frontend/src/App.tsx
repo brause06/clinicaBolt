@@ -5,6 +5,8 @@ import Home from './pages/Home'  // Asegúrate de que la ruta de importación se
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Register from './pages/Register'
+import EditPatient from './pages/EditPatient'  // Importa el componente EditPatient
+import AddPatient from './pages/AddPatient'  // Importa el nuevo componente
 // Importa otros componentes según sea necesario
 
 const App = () => {
@@ -15,6 +17,8 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/patient/:id/edit" element={<EditPatient />} />
+        <Route path="/add-patient" element={<AddPatient />} />
       </Route>
     </Routes>
   )

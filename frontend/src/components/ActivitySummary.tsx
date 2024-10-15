@@ -2,6 +2,7 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Users, Calendar, Clock, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { UserRole } from '../types/user';
 
 interface Notification {
   id: string;
@@ -40,7 +41,7 @@ const ActivitySummary: React.FC<ActivitySummaryProps> = ({ notifications = [] })
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">Resumen de Actividad</h2>
       
-      {user?.role === 'physiotherapist' && (
+      {user?.role === UserRole.FISIOTERAPEUTA && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <SummaryCard
             icon={<Users className="w-8 h-8 text-blue-500" />}
@@ -67,7 +68,7 @@ const ActivitySummary: React.FC<ActivitySummaryProps> = ({ notifications = [] })
       
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-2">
-          {user?.role === 'physiotherapist' ? 'Pacientes Atendidos Esta Semana' : 'Ejercicios Completados Esta Semana'}
+          {user?.role === UserRole.FISIOTERAPEUTA ? 'Pacientes Atendidos Esta Semana' : 'Ejercicios Completados Esta Semana'}
         </h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data}>
@@ -76,7 +77,7 @@ const ActivitySummary: React.FC<ActivitySummaryProps> = ({ notifications = [] })
             <YAxis />
             <Tooltip />
             <Legend />
-            <Bar dataKey={user?.role === 'physiotherapist' ? 'patients' : 'exercises'} fill="#8884d8" />
+            <Bar dataKey={user?.role === UserRole.FISIOTERAPEUTA ? 'patients' : 'exercises'} fill="#8884d8" />
           </BarChart>
         </ResponsiveContainer>
       </div>

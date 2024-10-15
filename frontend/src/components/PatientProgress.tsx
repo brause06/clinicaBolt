@@ -18,7 +18,7 @@ const mockProgressData: ProgressData[] = [
 ]
 
 interface PatientProgressProps {
-  patientId: string;
+  patientId: number;
 }
 
 const PatientProgress: React.FC<PatientProgressProps> = ({ patientId }) => {

@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
-import { Users, Search, ChevronDown, Plus, Edit, Trash2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Search, ChevronDown, Plus, Edit } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
 
 interface Patient {
-  id: string;
+  id: number;
   name: string;
   age: number;
   condition?: string;
@@ -12,20 +13,40 @@ interface Patient {
 
 interface PatientListProps {
   onSelectPatient: (patient: Patient) => void;
-  selectedPatientId: string | null;
+  selectedPatientId: number | null;
 }
 
 const PatientList: React.FC<PatientListProps> = ({ onSelectPatient, selectedPatientId }) => {
+  const [patients, setPatients] = useState<Patient[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [sortBy, setSortBy] = useState<keyof Patient>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
-  // Mock patient data
-  const [patients, setPatients] = useState<Patient[]>([
-    { id: '1', name: 'Juan Pérez', age: 35, condition: 'Lumbalgia', lastAppointment: '2023-04-15' },
-    { id: '2', name: 'María García', age: 28, condition: 'Tendinitis', lastAppointment: '2023-04-20' },
-    { id: '3', name: 'Carlos Rodríguez', age: 45, condition: 'Artritis', lastAppointment: '2023-04-18' },
-  ])
+  useEffect(() => {
+    fetchPatients()
+  }, [searchTerm, sortBy, sortOrder, page])
+
+  const fetchPatients = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      const response = await axios.get('/api/pacientes', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { search: searchTerm, sortBy, sortOrder, page }
+      })
+      setPatients(response.data.pacientes)
+      setTotalPages(response.data.totalPages)
+    } catch (error) {
+      console.error('Error fetching patients:', error)
+      setError('Error al cargar los pacientes')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSort = (key: keyof Patient) => {
     if (sortBy === key) {
@@ -49,6 +70,9 @@ const PatientList: React.FC<PatientListProps> = ({ onSelectPatient, selectedPati
     if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1
     return 0
   })
+
+  if (loading) return <div>Cargando pacientes...</div>
+  if (error) return <div>{error}</div>
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">

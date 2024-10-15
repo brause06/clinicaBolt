@@ -20,4 +20,10 @@ export class Cita {
 
     @Column({ nullable: true })
     notes?: string;
+
+    @Column({ default: 30 })
+    duration!: number; // Duración en minutos
+
+    @Column({ nullable: true })
+    reasonForVisit?: string;
 }

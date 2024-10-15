@@ -13,7 +13,7 @@ import UserProfile from '../components/UserProfile'
 import ActivitySummary from '../components/ActivitySummary'
 
 interface Patient {
-  id: string;
+  id: number;
   name: string;
   age: number;
   condition?: string;

@@ -15,6 +15,15 @@ export class Objetivo {
     @Column()
     completed!: boolean;
 
+    @Column({ nullable: true })
+    completionDate?: Date;
+
+    @Column({ type: 'float', nullable: true })
+    progressPercentage?: number;
+
+    @Column({ nullable: true })
+    notes?: string;
+
     @ManyToOne(() => Paciente, paciente => paciente.objetivos)
     patient!: Paciente;
 }

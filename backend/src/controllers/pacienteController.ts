@@ -6,57 +6,109 @@ import { PlanTratamiento } from "../models/PlanTratamiento";
 import { Objetivo } from "../models/Objetivo";
 import { Progreso } from "../models/Progreso";
 import { Mensaje } from "../models/Mensaje";
+import { Like, FindOptionsWhere } from "typeorm";
 
 const pacienteRepository = AppDataSource.getRepository(Paciente)
 
 export const getAllPacientes = async (req: Request, res: Response) => {
     try {
-        const pacientes = await pacienteRepository.find({
+        const { search, sortBy, sortOrder, page = 1, limit = 10 } = req.query
+
+        let where: FindOptionsWhere<Paciente> = {}
+        if (search) {
+            where = [
+                { name: Like(`%${search}%`) },
+                { condition: Like(`%${search}%`) },
+                { age: Like(`%${search}%`) },
+                { lastAppointment: Like(`%${search}%`) }
+            ] as FindOptionsWhere<Paciente>
+        }
+
+        const [pacientes, total] = await pacienteRepository.findAndCount({
+            where,
+            order: sortBy ? { [sortBy as string]: sortOrder } : undefined,
+            skip: (Number(page) - 1) * Number(limit),
+            take: Number(limit),
             relations: ['usuario']
-        });
-        console.log('Pacientes encontrados:', pacientes); 
-        res.json(pacientes);
+        })
+
+        res.json({
+            pacientes,
+            total,
+            page: Number(page),
+            totalPages: Math.ceil(total / Number(limit))
+        })
     } catch (error) {
-        console.error('Error al obtener pacientes:', error);  
-        res.status(500).json({ message: "Error al obtener pacientes" });
+        console.error("Error al obtener pacientes:", error)
+        res.status(500).json({ message: "Error al obtener pacientes" })
     }
 }
 
 export const createPaciente = async (req: Request, res: Response) => {
     try {
-        const newPaciente = pacienteRepository.create(req.body)
-        const result = await pacienteRepository.save(newPaciente)
-        res.status(201).json(result)
+        const { name, age, condition, email, phone, address, emergencyContact, medicalHistory, userId } = req.body;
+        const newPaciente = pacienteRepository.create({
+            name,
+            age,
+            condition,
+            email,
+            phone,
+            address,
+            emergencyContact,
+            medicalHistory,
+            usuario: { id: userId }
+        });
+        const result = await pacienteRepository.save(newPaciente);
+        res.status(201).json(result);
     } catch (error) {
-        res.status(500).json({ message: "Error al crear paciente" })
+        console.error("Error al crear paciente:", error);
+        res.status(500).json({ message: "Error al crear paciente" });
     }
-}
+};
 
 export const getPacienteById = async (req: Request, res: Response) => {
     try {
-        const paciente = await pacienteRepository.findOneBy({ id: parseInt(req.params.id) })
+        const pacienteId = parseInt(req.params.id)
+        const paciente = await pacienteRepository.findOneBy({ id: pacienteId })
+
         if (!paciente) {
             return res.status(404).json({ message: "Paciente no encontrado" })
         }
+
         res.json(paciente)
     } catch (error) {
+        console.error("Error al obtener paciente:", error)
         res.status(500).json({ message: "Error al obtener paciente" })
     }
 }
 
 export const updatePaciente = async (req: Request, res: Response) => {
     try {
-        const paciente = await pacienteRepository.findOneBy({ id: parseInt(req.params.id) })
+        const pacienteId = parseInt(req.params.id);
+        const { name, age, condition, email, phone, address, emergencyContact, medicalHistory } = req.body;
+
+        const paciente = await pacienteRepository.findOneBy({ id: pacienteId });
+
         if (!paciente) {
-            return res.status(404).json({ message: "Paciente no encontrado" })
+            return res.status(404).json({ message: "Paciente no encontrado" });
         }
-        pacienteRepository.merge(paciente, req.body)
-        const result = await pacienteRepository.save(paciente)
-        res.json(result)
+
+        paciente.name = name || paciente.name;
+        paciente.age = age || paciente.age;
+        paciente.condition = condition || paciente.condition;
+        paciente.email = email || paciente.email;
+        paciente.phone = phone || paciente.phone;
+        paciente.address = address || paciente.address;
+        paciente.emergencyContact = emergencyContact || paciente.emergencyContact;
+        paciente.medicalHistory = medicalHistory || paciente.medicalHistory;
+
+        const updatedPaciente = await pacienteRepository.save(paciente);
+        res.json(updatedPaciente);
     } catch (error) {
-        res.status(500).json({ message: "Error al actualizar paciente" })
+        console.error("Error al actualizar paciente:", error);
+        res.status(500).json({ message: "Error al actualizar paciente" });
     }
-}
+};
 
 export const deletePaciente = async (req: Request, res: Response) => {
     try {
@@ -164,4 +216,41 @@ export const getPacienteMensajes = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error al obtener los mensajes del paciente" });
     }
 };
+
+export const getPacienteDetails = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.id)
+        const paciente = await pacienteRepository.findOne({
+            where: { id: pacienteId },
+            relations: ["citas", "planTratamiento"]
+        })
+
+        if (!paciente) {
+            return res.status(404).json({ message: "Paciente no encontrado" })
+        }
+
+        const nextAppointment = paciente.citas
+            .filter(cita => new Date(cita.date) > new Date())
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+
+        const patientDetails = {
+            id: paciente.id,
+            name: paciente.name,
+            age: paciente.age,
+            condition: paciente.condition,
+            lastAppointment: paciente.citas
+                .filter(cita => new Date(cita.date) <= new Date())
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]?.date,
+            nextAppointment: nextAppointment?.date,
+            treatmentPlan: paciente.planesTratamiento[0]?.name // o cualquier otra propiedad que quieras mostrar
+        }
+
+        res.json(patientDetails)
+    } catch (error) {
+        console.error("Error al obtener detalles del paciente:", error)
+        res.status(500).json({ message: "Error al obtener detalles del paciente" })
+    }
+}
+
 // Implementa más funciones según sea necesario
+

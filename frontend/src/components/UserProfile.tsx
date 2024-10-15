@@ -1,15 +1,16 @@
 import React, { useState } from 'react'
 import { User, Mail, Phone, Edit2, Save } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { UserRole } from '../types/user'
 
 const UserProfile: React.FC = () => {
   const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [profile, setProfile] = useState({
-    name: user?.name || '',
+    name: user?.username || '',
     email: user?.email || '',
     phone: '123-456-7890', // Ejemplo, deberías obtener esto del backend
-    specialization: user?.role === 'physiotherapist' ? 'Fisioterapeuta Deportivo' : '',
+    specialization: user?.role === UserRole.FISIOTERAPEUTA ? 'Fisioterapeuta Deportivo' : '',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +72,7 @@ const UserProfile: React.FC = () => {
               className="flex-grow p-2 border rounded"
             />
           </div>
-          {user?.role === 'physiotherapist' && (
+          {user?.role === UserRole.FISIOTERAPEUTA && (
             <div className="flex items-center">
               <User className="w-5 h-5 text-gray-400 mr-2" />
               <input

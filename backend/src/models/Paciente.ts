@@ -45,6 +45,21 @@ export class Paciente {
 
     @OneToMany(() => Mensaje, mensaje => mensaje.patient)
     mensajes!: Mensaje[];
+
+    @Column({ nullable: true })
+    email?: string;
+
+    @Column({ nullable: true })
+    phone?: string;
+
+    @Column({ nullable: true })
+    address?: string;
+
+    @Column({ nullable: true })
+    emergencyContact?: string;
+
+    @Column({ nullable: true })
+    medicalHistory?: string;
 }
 
 

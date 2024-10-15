@@ -13,7 +13,7 @@ interface Exercise {
 }
 
 interface ExercisePlanProps {
-  patientId: string;
+  patientId: number;
 }
 
 const ExercisePlan: React.FC<ExercisePlanProps> = ({ patientId }) => {

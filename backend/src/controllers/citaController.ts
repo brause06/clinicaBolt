@@ -11,15 +11,15 @@ export const getAllCitas = async (req: Request, res: Response) => {
         const citas = await citaRepository.find({ relations: ["patient"] })
         res.json(citas)
     } catch (error) {
+        console.error("Error al obtener citas:", error)
         res.status(500).json({ message: "Error al obtener citas" })
     }
 }
 
 export const createCita = async (req: Request, res: Response) => {
     try {
-        const { date, patientId, physicianName, status, notes } = req.body;
+        const { date, patientId, physicianName, status, notes, duration, reasonForVisit } = req.body;
 
-        // Buscar el paciente
         const paciente = await pacienteRepository.findOne({ where: { id: patientId } });
         if (!paciente) {
             return res.status(404).json({ message: "Paciente no encontrado" });
@@ -30,7 +30,9 @@ export const createCita = async (req: Request, res: Response) => {
             patient: paciente,
             physicianName,
             status,
-            notes
+            notes,
+            duration,
+            reasonForVisit
         });
 
         const result = await citaRepository.save(newCita);
@@ -58,26 +60,62 @@ export const getCitaById = async (req: Request, res: Response) => {
 
 export const updateCita = async (req: Request, res: Response) => {
     try {
-        const cita = await citaRepository.findOneBy({ id: parseInt(req.params.id) })
+        const citaId = parseInt(req.params.id);
+        const { date, patientId, physicianName, status, notes, duration, reasonForVisit } = req.body;
+
+        const cita = await citaRepository.findOne({ where: { id: citaId }, relations: ["patient"] });
         if (!cita) {
-            return res.status(404).json({ message: "Cita no encontrada" })
+            return res.status(404).json({ message: "Cita no encontrada" });
         }
-        citaRepository.merge(cita, req.body)
-        const result = await citaRepository.save(cita)
-        res.json(result)
+
+        if (patientId && patientId !== cita.patient.id) {
+            const newPatient = await pacienteRepository.findOne({ where: { id: patientId } });
+            if (!newPatient) {
+                return res.status(404).json({ message: "Paciente no encontrado" });
+            }
+            cita.patient = newPatient;
+        }
+
+        cita.date = new Date(date) || cita.date;
+        cita.physicianName = physicianName || cita.physicianName;
+        cita.status = status || cita.status;
+        cita.notes = notes || cita.notes;
+        cita.duration = duration || cita.duration;
+        cita.reasonForVisit = reasonForVisit || cita.reasonForVisit;
+
+        const updatedCita = await citaRepository.save(cita);
+        res.json(updatedCita);
     } catch (error) {
-        res.status(500).json({ message: "Error al actualizar cita" })
+        console.error("Error al actualizar cita:", error);
+        res.status(500).json({ message: "Error al actualizar cita" });
     }
 }
 
 export const deleteCita = async (req: Request, res: Response) => {
     try {
-        const result = await citaRepository.delete(req.params.id)
-        if (result.affected === 0) {
-            return res.status(404).json({ message: "Cita no encontrada" })
+        const citaId = parseInt(req.params.id);
+        const cita = await citaRepository.findOne({ where: { id: citaId } });
+        if (!cita) {
+            return res.status(404).json({ message: "Cita no encontrada" });
         }
-        res.status(204).send()
+        await citaRepository.remove(cita);
+        res.json({ message: "Cita eliminada con éxito" });
     } catch (error) {
-        res.status(500).json({ message: "Error al eliminar cita" })
+        console.error("Error al eliminar cita:", error);
+        res.status(500).json({ message: "Error al eliminar cita" });
+    }
+}
+
+export const getCitasByPatient = async (req: Request, res: Response) => {
+    try {
+        const patientId = parseInt(req.params.patientId);
+        const citas = await citaRepository.find({
+            where: { patient: { id: patientId } },
+            relations: ["patient"]
+        });
+        res.json(citas);
+    } catch (error) {
+        console.error("Error al obtener citas del paciente:", error);
+        res.status(500).json({ message: "Error al obtener citas del paciente" });
     }
 }

@@ -1,51 +1,81 @@
 import React, { useState, useEffect } from 'react'
 import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import api from '../api/api'
+import { Patient } from '../types/patient'
 
-interface Appointment {
-  id: string;
-  date: Date;
-  patientName: string;
+interface Cita {
+  id: number;
+  date: string;
+  patient: {
+    id: number;
+    name: string;
+  };
   physicianName: string;
   status: 'scheduled' | 'completed' | 'cancelled';
   notes?: string;
-}
-
-interface Patient {
-  id: number;
-  name: string;
+  duration: number;
+  reasonForVisit?: string;
 }
 
 const AppointmentScheduler: React.FC = () => {
+  const { user, token } = useAuth()
+
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [selectedPatient, setSelectedPatient] = useState<number | null>(null)
   const [notes, setNotes] = useState<string>('')
-  const { user } = useAuth()
+  const [reasonForVisit, setReasonForVisit] = useState<string>('')
+  console.log('Token disponible:', !!token)
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: '1',
-      date: new Date(2023, 3, 15, 10, 0),
-      patientName: 'Juan Paciente',
-      physicianName: 'Dra. García',
-      status: 'scheduled',
-    },
-    {
-      id: '2',
-      date: new Date(2023, 3, 15, 14, 30),
-      patientName: 'María López',
-      physicianName: 'Dr. Rodríguez',
-      status: 'scheduled',
-    },
-  ])
+  const [appointments, setAppointments] = useState<Cita[]>([])
+  const [patients, setPatients] = useState<Patient[]>([])
 
-  const [patients, setPatients] = useState<Patient[]>([
-    { id: 1, name: 'Juan Paciente' },
-    { id: 2, name: 'María López' },
-    { id: 3, name: 'Carlos Sánchez' },
-  ])
+  useEffect(() => {
+    console.log('useEffect se está ejecutando, token:', token)
+    if (token) {
+      console.log('Llamando a fetchAppointments y fetchPatients')
+      fetchAppointments()
+      fetchPatients()
+    }
+  }, [token])
+
+  // Agrega otro useEffect para monitorear cambios en patients
+  useEffect(() => {
+    console.log('Pacientes actualizados:', patients)
+  }, [patients])
+
+  if (!token) {
+    return <div>Por favor, inicie sesión para acceder al programador de citas.</div>
+  }
+
+  const fetchAppointments = async () => {
+    try {
+      const response = await api.get('/citas')
+      setAppointments(response.data)
+    } catch (error) {
+      console.error('Error al obtener citas:', error)
+    }
+  }
+
+  const fetchPatients = async () => {
+    console.log('Iniciando fetchPatients')
+    try {
+      const response = await api.get('/pacientes')
+      console.log('Respuesta de pacientes:', response.data)
+      if (response.data && Array.isArray(response.data.pacientes)) {
+        setPatients(response.data.pacientes)
+        console.log('Estado de patients actualizado:', response.data.pacientes)
+      } else {
+        console.error('La respuesta no contiene un array de pacientes:', response.data)
+        setPatients([])
+      }
+    } catch (error) {
+      console.error('Error al obtener pacientes:', error)
+      setPatients([])
+    }
+  }
 
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay()
@@ -65,31 +95,49 @@ const AppointmentScheduler: React.FC = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
   }
 
-  const handleBookAppointment = () => {
+  const handleBookAppointment = async () => {
     if (selectedDate && selectedTime && selectedPatient) {
-      const newAppointment: Appointment = {
-        id: Date.now().toString(),
-        date: new Date(selectedDate.setHours(parseInt(selectedTime.split(':')[0]), parseInt(selectedTime.split(':')[1]))),
-        patientName: patients.find(p => p.id === selectedPatient)?.name || 'Paciente Desconocido',
-        physicianName: user?.name || 'Dr. Asignado',
-        status: 'scheduled',
-        notes: notes,
+      try {
+        const newAppointment = {
+          date: new Date(selectedDate.setHours(parseInt(selectedTime.split(':')[0]), parseInt(selectedTime.split(':')[1]))).toISOString(),
+          patientId: selectedPatient,
+          physicianName: user?.username || 'Dr. Asignado',
+          status: 'scheduled',
+          notes: notes,
+          duration: 30, // Asumimos una duración predeterminada de 30 minutos
+          reasonForVisit: reasonForVisit
+        }
+        const response = await api.post('/citas', newAppointment)
+        setAppointments([...appointments, response.data])
+        alert(`Cita reservada para ${response.data.patient.name} el ${new Date(response.data.date).toLocaleDateString()} a las ${new Date(response.data.date).toLocaleTimeString()}`)
+        resetForm()
+      } catch (error) {
+        console.error('Error al crear la cita:', error)
+        alert('Hubo un error al reservar la cita. Por favor, inténtelo de nuevo.')
       }
-      setAppointments([...appointments, newAppointment])
-      alert(`Cita reservada para ${newAppointment.patientName} el ${selectedDate.toLocaleDateString()} a las ${selectedTime}`)
-      setSelectedDate(null)
-      setSelectedTime('')
-      setSelectedPatient(null)
-      setNotes('')
     } else {
       alert('Por favor, selecciona una fecha, hora y paciente para la cita.')
     }
   }
 
-  const handleCancelAppointment = (id: string) => {
-    setAppointments(appointments.map(app => 
-      app.id === id ? { ...app, status: 'cancelled' } : app
-    ))
+  const handleCancelAppointment = async (id: number) => {
+    try {
+      await api.put(`/citas/${id}`, { status: 'cancelled' })
+      setAppointments(appointments.map(app => 
+        app.id === id ? { ...app, status: 'cancelled' } : app
+      ))
+    } catch (error) {
+      console.error('Error al cancelar la cita:', error)
+      alert('Hubo un error al cancelar la cita. Por favor, inténtelo de nuevo.')
+    }
+  }
+
+  const resetForm = () => {
+    setSelectedDate(null)
+    setSelectedTime('')
+    setSelectedPatient(null)
+    setNotes('')
+    setReasonForVisit('')
   }
 
   const availableTimes = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
@@ -121,7 +169,7 @@ const AppointmentScheduler: React.FC = () => {
           const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), index + 1)
           const isSelected = selectedDate?.toDateString() === date.toDateString()
           const hasAppointment = appointments.some(
-            app => app.date.toDateString() === date.toDateString() && app.status !== 'cancelled'
+            app => new Date(app.date).toDateString() === date.toDateString() && app.status !== 'cancelled'
           )
           return (
             <button
@@ -167,9 +215,13 @@ const AppointmentScheduler: React.FC = () => {
             className="w-full p-2 border rounded-md"
           >
             <option value="">Seleccione un paciente</option>
-            {patients.map(patient => (
-              <option key={patient.id} value={patient.id}>{patient.name}</option>
-            ))}
+            {patients.length > 0 ? (
+              patients.map(patient => (
+                <option key={patient.id} value={patient.id}>{patient.name}</option>
+              ))
+            ) : (
+              <option value="" disabled>No hay pacientes disponibles</option>
+            )}
           </select>
         </div>
       )}
@@ -200,7 +252,7 @@ const AppointmentScheduler: React.FC = () => {
             <li key={appointment.id} className="bg-gray-100 p-3 rounded-md flex justify-between items-center">
               <div>
                 <p><strong>Fecha:</strong> {appointment.date.toLocaleString()}</p>
-                <p><strong>Paciente:</strong> {appointment.patientName}</p>
+                <p><strong>Paciente:</strong> {appointment.patient.name}</p>
                 <p><strong>Fisioterapeuta:</strong> {appointment.physicianName}</p>
                 <p><strong>Estado:</strong> {appointment.status}</p>
                 {appointment.notes && <p><strong>Notas:</strong> {appointment.notes}</p>}
