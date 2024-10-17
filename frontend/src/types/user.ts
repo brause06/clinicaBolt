@@ -19,7 +19,7 @@ export interface User {
 }
 
 export interface PacienteBasico {
-  id: string;
+  id: number;
   name: string;
 }
 
