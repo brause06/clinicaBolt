@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { FileText, Plus } from 'lucide-react'
 import api from '../api/api'
+import { useAuth } from '../contexts/AuthContext'
+import { UserRole } from '../types/user'
 
 interface MedicalRecord {
   id: number;
@@ -18,15 +20,17 @@ const MedicalHistory: React.FC<MedicalHistoryProps> = ({ patientId }) => {
   const [newRecord, setNewRecord] = useState({ fecha: '', diagnostico: '', tratamiento: '' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
 
   useEffect(() => {
     fetchMedicalHistory()
-  }, [patientId])
+  }, [patientId, user])
 
   const fetchMedicalHistory = async () => {
     try {
       setLoading(true)
-      const response = await api.get(`/pacientes/${patientId}/historial-medico`)
+      const id = user?.role === UserRole.PACIENTE ? user.id : patientId
+      const response = await api.get(`/pacientes/${id}/historial-medico`)
       console.log("Respuesta del servidor:", response.data);
       setRecords(response.data)
       setLoading(false)
@@ -39,15 +43,15 @@ const MedicalHistory: React.FC<MedicalHistoryProps> = ({ patientId }) => {
 
   const handleAddRecord = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newRecord.fecha && newRecord.diagnostico && newRecord.tratamiento) {
-      try {
-        const response = await api.post(`/pacientes/${patientId}/historial-medico`, newRecord)
-        setRecords([...records, response.data])
-        setNewRecord({ fecha: '', diagnostico: '', tratamiento: '' })
-      } catch (error) {
-        console.error('Error al agregar registro médico:', error)
-        setError('Error al agregar el registro médico')
-      }
+    if (user?.role === UserRole.PACIENTE) return // Prevenir que los pacientes añaden registros
+
+    try {
+      const response = await api.post(`/pacientes/${patientId}/historial-medico`, newRecord)
+      setRecords([...records, response.data])
+      setNewRecord({ fecha: '', diagnostico: '', tratamiento: '' })
+    } catch (error) {
+      console.error('Error al agregar registro médico:', error)
+      setError('Error al agregar el registro médico')
     }
   }
 
@@ -73,34 +77,36 @@ const MedicalHistory: React.FC<MedicalHistoryProps> = ({ patientId }) => {
       ) : (
         <p>No hay registros médicos para este paciente.</p>
       )}
-      <form onSubmit={handleAddRecord} className="mt-6 space-y-4">
-        <input
-          type="date"
-          value={newRecord.fecha}
-          onChange={(e) => setNewRecord({ ...newRecord, fecha: e.target.value })}
-          className="w-full border rounded-md p-2"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Diagnóstico"
-          value={newRecord.diagnostico}
-          onChange={(e) => setNewRecord({ ...newRecord, diagnostico: e.target.value })}
-          className="w-full border rounded-md p-2"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Tratamiento"
-          value={newRecord.tratamiento}
-          onChange={(e) => setNewRecord({ ...newRecord, tratamiento: e.target.value })}
-          className="w-full border rounded-md p-2"
-          required
-        />
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center">
-          <Plus className="w-5 h-5 mr-2" /> Agregar Registro
-        </button>
-      </form>
+      {user?.role !== UserRole.PACIENTE && (
+        <form onSubmit={handleAddRecord} className="mt-6 space-y-4">
+          <input
+            type="date"
+            value={newRecord.fecha}
+            onChange={(e) => setNewRecord({ ...newRecord, fecha: e.target.value })}
+            className="w-full border rounded-md p-2"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Diagnóstico"
+            value={newRecord.diagnostico}
+            onChange={(e) => setNewRecord({ ...newRecord, diagnostico: e.target.value })}
+            className="w-full border rounded-md p-2"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Tratamiento"
+            value={newRecord.tratamiento}
+            onChange={(e) => setNewRecord({ ...newRecord, tratamiento: e.target.value })}
+            className="w-full border rounded-md p-2"
+            required
+          />
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md flex items-center">
+            <Plus className="w-5 h-5 mr-2" /> Agregar Registro
+          </button>
+        </form>
+      )}
     </div>
   )
 }

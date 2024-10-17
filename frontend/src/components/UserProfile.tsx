@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { User, Mail, Phone, Edit2, Save, Calendar, MapPin, Camera } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { UserRole } from '../types/user'
-import { getUserProfile, updateUserProfile } from '../services/userService'
+import { getUserProfile } from '../services/userService'
 import api from '../api/api'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';

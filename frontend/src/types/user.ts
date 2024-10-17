@@ -1,17 +1,19 @@
 export enum UserRole {
-    PACIENTE = 'PACIENTE',
-    FISIOTERAPEUTA = 'FISIOTERAPEUTA',
-    ADMIN = 'ADMIN'
-  }
-  
+    PACIENTE = 'paciente',
+    FISIOTERAPEUTA = 'fisioterapeuta',
+    ADMIN = 'admin'
+}
+
 export interface User {
   id: number;
   username: string;
+  password: string;
   email: string;
+  age?: number;
   phoneNumber?: string;
-  role: string;
+  role: UserRole;
   specialization?: string;
   dateOfBirth?: string;
   address?: string;
   profileImageUrl?: string;
-  }
+}

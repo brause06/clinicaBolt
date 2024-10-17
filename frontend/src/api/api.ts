@@ -31,31 +31,10 @@ export const setAuthToken = (token: string | null) => {
 export default api;
 
 
-//export const login = async (email: string, password: string) => {
-  //const response = await fetch(`${API_URL}/auth/login`, {
-    //method: 'POST',
-    //headers: { 'Content-Type': 'application/json' },
-    //body: JSON.stringify({ email, password }),
-  //});
-  //if (!response.ok) {
-    //const errorData = await response.json();
-    //throw new Error(errorData.message || 'Login failed');
-  //}
-  //return response.json();
-//};
-
-//export const register = async (userData: UserRegistrationData) => {
-  //const response = await fetch(`${API_URL}/auth/register`, {
-   // method: 'POST',
-    //headers: { 'Content-Type': 'application/json' },
-    //body: JSON.stringify(userData),
-  //});
-  //if (!response.ok) {
-    //const errorData = await response.json();
-   // throw new Error(errorData.message || 'Registration failed');
-  //}
-  //return response.json();
-//};
-
-// Añade más funciones para otras llamadas a la API según sea necesario
-
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
