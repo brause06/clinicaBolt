@@ -18,20 +18,35 @@ export const getAllEjercicios = async (req: Request, res: Response) => {
 
 export const createEjercicio = async (req: Request, res: Response) => {
     try {
-        const { name, description, duration, frequency, patientId } = req.body;
-        const paciente = await pacienteRepository.findOne({ where: { id: patientId } });
+        const pacienteId = parseInt(req.params.pacienteId);
+        const { nombre, descripcion, duracion, frecuencia } = req.body;
+
+        const paciente = await pacienteRepository.findOne({ where: { id: pacienteId } });
         if (!paciente) {
             return res.status(404).json({ message: "Paciente no encontrado" });
         }
+
         const newEjercicio = ejercicioRepository.create({
-            name,
-            description,
-            duration,
-            frequency,
+            name: nombre,
+            description: descripcion,
+            duration: duracion,
+            frequency: frecuencia,
             patient: paciente
         });
+
         const result = await ejercicioRepository.save(newEjercicio);
-        res.status(201).json(result);
+        
+        // Transformar el resultado antes de enviarlo
+        const ejercicioResponse = {
+            id: result.id,
+            nombre: result.name,
+            descripcion: result.description,
+            duracion: result.duration,
+            frecuencia: result.frequency,
+            paciente: result.patient
+        };
+
+        res.status(201).json(ejercicioResponse);
     } catch (error) {
         console.error("Error al crear ejercicio:", error);
         res.status(500).json({ message: "Error al crear ejercicio" });
@@ -80,15 +95,59 @@ export const deleteEjercicio = async (req: Request, res: Response) => {
 }
 
 export const getEjerciciosByPatient = async (req: Request, res: Response) => {
+    console.log("Received request for patient exercises");
+    console.log("Request params:", req.params);
+    console.log("Authenticated user:", req.user);
+    
     try {
-        const patientId = parseInt(req.params.patientId);
-        const ejercicios = await ejercicioRepository.find({
-            where: { patient: { id: patientId } },
-            relations: ["patient"]
+        const pacienteId = parseInt(req.params.pacienteId);
+        console.log("Parsed patient ID:", pacienteId);
+        
+        if (isNaN(pacienteId)) {
+            console.log("Invalid patient ID");
+            return res.status(400).json({ message: "ID de paciente no válido" });
+        }
+
+        const pacienteRepository = AppDataSource.getRepository(Paciente);
+        const paciente = await pacienteRepository.findOne({
+            where: { id: pacienteId },
+            relations: ["ejercicios"]
         });
-        res.json(ejercicios);
+
+        console.log("Found patient:", paciente);
+
+        if (!paciente) {
+            console.log("Patient not found");
+            return res.status(404).json({ message: "Paciente no encontrado" });
+        }
+
+        console.log("Exercises found:", paciente.ejercicios);
+        res.json(paciente.ejercicios || []);
     } catch (error) {
         console.error("Error al obtener ejercicios del paciente:", error);
-        res.status(500).json({ message: "Error al obtener ejercicios del paciente" });
+        res.status(500).json({ 
+            message: "Error al obtener ejercicios del paciente", 
+            error: error instanceof Error ? error.message : String(error) 
+        });
     }
 }
+
+export const completeEjercicio = async (req: Request, res: Response) => {
+  try {
+    const ejercicioId = parseInt(req.params.id);
+    const ejercicio = await ejercicioRepository.findOne({ where: { id: ejercicioId } });
+    
+    if (!ejercicio) {
+      return res.status(404).json({ message: "Ejercicio no encontrado" });
+    }
+
+    ejercicio.completed = true;
+    ejercicio.lastCompleted = new Date();
+
+    const updatedEjercicio = await ejercicioRepository.save(ejercicio);
+    res.json(updatedEjercicio);
+  } catch (error) {
+    console.error("Error al completar ejercicio:", error);
+    res.status(500).json({ message: "Error al completar ejercicio" });
+  }
+};

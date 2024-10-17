@@ -32,4 +32,7 @@ export class Ejercicio {
 
     @ManyToOne(() => Paciente, paciente => paciente.ejercicios)
     patient!: Paciente;
+
+    @Column()
+    patientId!: number;
 }

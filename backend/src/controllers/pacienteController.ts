@@ -8,6 +8,8 @@ import { Progreso } from "../models/Progreso";
 import { Mensaje } from "../models/Mensaje";
 import { Like, FindOptionsWhere } from "typeorm";
 import { HistorialMedico } from "../models/HistorialMedico"
+import { Ejercicio } from "../models/Ejercicio"
+import { UserRole } from "../types/roles"
 
 const pacienteRepository = AppDataSource.getRepository(Paciente)
 
@@ -297,7 +299,56 @@ export const addHistorialMedico = async (req: Request, res: Response) => {
     }
 };
 
+export const getEjerciciosByPatient = async (req: Request, res: Response) => {
+  console.log("Received request for patient exercises");
+  console.log("Request params:", req.params);
+  console.log("Authenticated user:", req.user);
+  
+  try {
+    const pacienteId = parseInt(req.params.pacienteId);
+    console.log("Parsed patient ID:", pacienteId);
+    
+    if (isNaN(pacienteId)) {
+      console.log("Invalid patient ID");
+      return res.status(400).json({ message: "ID de paciente no válido" });
+    }
+
+    // Verificar permisos
+    if (req.user?.role === UserRole.PACIENTE && req.user?.userId!== pacienteId) {
+      console.log("Patient trying to access another patient's exercises");
+      return res.status(403).json({ message: "No tiene permiso para acceder a los ejercicios de este paciente" });
+    }
+
+    const pacienteRepository = AppDataSource.getRepository(Paciente);
+    const paciente = await pacienteRepository.findOne({
+      where: { id: pacienteId },
+      relations: ["ejercicios"]
+    });
+
+    console.log("Found patient:", paciente);
+
+    if (!paciente) {
+      console.log("Patient not found");
+      return res.status(404).json({ message: "Paciente no encontrado" });
+    }
+
+    console.log("Exercises found:", paciente.ejercicios);
+    res.json(paciente.ejercicios || []);
+  } catch (error) {
+    console.error("Error al obtener ejercicios del paciente:", error);
+    res.status(500).json({ 
+      message: "Error al obtener ejercicios del paciente", 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+  }
+}
+
 // Implementa más funciones según sea necesario
+
+
+
+
+
 
 
 

@@ -13,9 +13,9 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { username, email, password, role, age, condition } = req.body;
 
-    // Verificar que el rol sea válido
-    if (!Object.values(UserRole).includes(role)) {
-      return res.status(400).json({ message: 'Rol no válido' });
+    let userRole: UserRole = UserRole.PACIENTE; // Valor por defecto
+    if (role && Object.values(UserRole).includes(role as UserRole)) {
+      userRole = role as UserRole;
     }
 
     // Verificar si el usuario ya existe
@@ -32,13 +32,13 @@ export const register = async (req: Request, res: Response) => {
       username,
       email,
       password: hashedPassword,
-      role
+      role: userRole
     });
 
     await userRepository.save(newUser);
 
     // Si el rol es paciente, crear entrada en la tabla paciente
-    if (role === UserRole.PACIENTE) {
+    if (userRole === UserRole.PACIENTE) {
       if (!age) {
         return res.status(400).json({ message: 'La edad es requerida para pacientes' });
       }
