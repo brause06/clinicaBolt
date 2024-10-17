@@ -1,8 +1,11 @@
-import { Request, Response } from "express"
+import { Request, Response, NextFunction } from "express"
 import { AppDataSource } from "../config/database"
 import { Mensaje } from "../models/Mensaje"
+import { Usuario } from "../models/Usuario"
+import { UserRole } from "../types/roles"
 
 const mensajeRepository = AppDataSource.getRepository(Mensaje)
+const usuarioRepository = AppDataSource.getRepository(Usuario)
 
 export const getAllMensajes = async (req: Request, res: Response) => {
     try {
@@ -68,8 +71,8 @@ export const getPacienteMensajes = async (req: Request, res: Response) => {
     try {
         const pacienteId = parseInt(req.params.pacienteId);
         const mensajes = await mensajeRepository.find({
-            where: { patient: { id: pacienteId } },
-            relations: ["patient"]
+            where: { receptor: { id: pacienteId } },
+            relations: ["receptor", "emisor"]
         });
 
         if (mensajes.length === 0) {
@@ -82,3 +85,48 @@ export const getPacienteMensajes = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error al obtener los mensajes del paciente" });
     }
 };
+
+export const getConversacion = async (req: Request, res: Response) => {
+    try {
+        const { emisorId, receptorId } = req.params
+        const mensajes = await mensajeRepository.find({
+            where: [
+                { emisor: { id: parseInt(emisorId) }, receptor: { id: parseInt(receptorId) } },
+                { emisor: { id: parseInt(receptorId) }, receptor: { id: parseInt(emisorId) } }
+            ],
+            order: { fechaEnvio: "ASC" },
+            relations: ["emisor", "receptor"]
+        })
+        res.json(mensajes)
+    } catch (error) {
+        res.status(500).json({ message: "Error al obtener la conversación" })
+    }
+}
+
+export const enviarMensaje = async (req: Request, res: Response) => {
+    try {
+        const { emisorId, receptorId } = req.params
+        const { contenido } = req.body
+
+        const emisor = await usuarioRepository.findOne({ where: { id: parseInt(emisorId) } })
+        const receptor = await usuarioRepository.findOne({ where: { id: parseInt(receptorId) } })
+
+        if (!emisor || !receptor) {
+            return res.status(404).json({ message: "Usuario no encontrado" })
+        }
+
+        const nuevoMensaje = mensajeRepository.create({
+            contenido,
+            emisor,
+            receptor,
+            leido: false
+        })
+
+        await mensajeRepository.save(nuevoMensaje)
+        res.status(201).json(nuevoMensaje)
+    } catch (error) {
+        res.status(500).json({ message: "Error al enviar el mensaje" })
+    }
+}
+
+

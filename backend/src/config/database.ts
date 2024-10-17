@@ -1,6 +1,6 @@
 import { DataSource } from "typeorm"
-import { Paciente } from "../models/Paciente"
 import { Usuario } from "../models/Usuario"
+import { Paciente } from "../models/Paciente"
 import { PlanTratamiento } from "../models/PlanTratamiento"
 import { Ejercicio } from "../models/Ejercicio"
 import { Progreso } from "../models/Progreso"

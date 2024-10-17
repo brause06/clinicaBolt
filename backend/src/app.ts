@@ -1,5 +1,5 @@
 import express from "express"
-import { AppDataSource } from "../src/config/database"
+import { AppDataSource } from "./config/database"
 import dotenv from 'dotenv';
 dotenv.config();
 import pacienteRoutes from "./routes/pacienteRoutes"
@@ -37,6 +37,7 @@ if (!fs.existsSync(uploadsPath)) {
 console.log("Ruta de uploads:", uploadsPath);
 app.use('/uploads', express.static(uploadsPath));
 
+console.log("Configurando rutas");
 app.use("/api/objetivos", objetivoRoutes)
 app.use("/api/pacientes", pacienteRoutes)
 app.use("/api/citas", citaRoutes)
@@ -48,18 +49,25 @@ app.use("/api/mensajes", mensajeRoutes)
 app.use("/api/auth", authRoutes)
 app.use("/api/users", userRoutes)
 
-app.use((req, res) => {
-  console.log(`Ruta no encontrada: ${req.method} ${req.url}`);
-  res.status(404).send('Ruta no encontrada');
+// Middleware de manejo de errores global
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Error no manejado:', err);
+  res.status(500).json({
+    message: 'Error interno del servidor',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
 });
 
 AppDataSource.initialize()
     .then(() => {
-        console.log("Base de datos inicializada")
+        console.log("Base de datos inicializada correctamente")
         app.listen(PORT, () => {
-            console.log(`Servidor corriendo en http://localhost:${PORT}`)
+            console.log(`Servidor escuchando en el puerto ${PORT}`)
         })
     })
-    .catch((error) => console.log(error))
+    .catch(error => {
+        console.error("Error al inicializar la base de datos:", error)
+    })
 
 export default app

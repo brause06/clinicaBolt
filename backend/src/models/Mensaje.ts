@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from "typeorm"
+import { Usuario } from "./Usuario"
 import { Paciente } from "./Paciente"
 
 @Entity()
@@ -7,23 +8,20 @@ export class Mensaje {
     id!: number;
 
     @Column()
-    sender!: string;
+    contenido!: string;
+
+    @CreateDateColumn()
+    fechaEnvio!: Date;
+
+    @ManyToOne(() => Usuario, usuario => usuario.mensajesEnviados)
+    emisor!: Usuario;
+
+    @ManyToOne(() => Usuario, usuario => usuario.mensajesRecibidos)
+    receptor!: Usuario;
 
     @Column()
-    content!: string;
-
-    @Column()
-    timestamp!: Date;
-
-    @Column()
-    status!: 'sending' | 'sent' | 'delivered' | 'read';
-
-    @Column({ nullable: true })
-    fileName?: string;
-
-    @Column({ nullable: true })
-    fileUrl?: string;
+    leido!: boolean;
 
     @ManyToOne(() => Paciente, paciente => paciente.mensajes)
-    patient!: Paciente;
+    paciente!: Paciente;
 }

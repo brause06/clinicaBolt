@@ -17,3 +17,9 @@ export interface User {
   address?: string;
   profileImageUrl?: string;
 }
+
+export interface PacienteBasico {
+  id: string;
+  name: string;
+}
+

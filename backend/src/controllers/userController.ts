@@ -43,12 +43,13 @@ export const updateUserProfile = async (req: Request, res: Response) => {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
 
-        usuario.username = username || usuario.username;
-        usuario.email = email || usuario.email;
-        usuario.phoneNumber = phoneNumber || usuario.phoneNumber;
-        usuario.address = address || usuario.address;
-        usuario.dateOfBirth = dateOfBirth || usuario.dateOfBirth;
-        usuario.specialization = specialization || usuario.specialization;
+        // Actualiza solo los campos que se han enviado
+        if (username) usuario.username = username;
+        if (email) usuario.email = email;
+        if (phoneNumber) usuario.phoneNumber = phoneNumber;
+        if (address) usuario.address = address;
+        if (dateOfBirth) usuario.dateOfBirth = dateOfBirth;
+        if (specialization) usuario.specialization = specialization;
 
         if (req.file) {
             const fileName = req.file.filename;

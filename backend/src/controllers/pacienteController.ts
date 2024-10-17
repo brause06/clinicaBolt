@@ -205,8 +205,8 @@ export const getPacienteMensajes = async (req: Request, res: Response) => {
     try {
         const pacienteId = parseInt(req.params.pacienteId);
         const mensajes = await AppDataSource.getRepository(Mensaje).find({
-            where: { patient: { id: pacienteId } },
-            relations: ["patient"]
+            where: { receptor: { id: pacienteId } },
+            relations: ["receptor"]
         });
         
         if (mensajes.length === 0) {

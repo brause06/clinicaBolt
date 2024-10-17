@@ -17,26 +17,37 @@ declare global {
 }
 
 export const auth = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+  console.log('Iniciando middleware de autenticación');
+  const authHeader = req.headers['authorization'];
+  console.log('Cabecera de autorización:', authHeader);
+  const token = authHeader && authHeader.split(' ')[1];
 
-  if (!token) {
-    return res.status(401).json({ message: 'No se proporcionó token de autenticación' });
+  if (token == null) {
+    console.log('No se proporcionó token');
+    return res.sendStatus(401);
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'tu_clave_secreta_aqui') as JwtPayload;
-    req.user = decoded;
+  jwt.verify(token, process.env.JWT_SECRET as string, (err: any, user: any) => {
+    if (err) {
+      console.error('Error al verificar el token:', err);
+      return res.sendStatus(403);
+    }
+    console.log('Usuario autenticado:', user);
+    req.user = user;
     next();
-  } catch (error) {
-    res.status(401).json({ message: 'Token inválido' });
-  }
+  });
 };
 
 export const roleAuth = (roles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
+    console.log('Iniciando middleware de autorización de rol');
+    console.log('Roles permitidos:', roles);
+    console.log('Rol del usuario:', req.user?.role);
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Acceso denegado' });
+      console.log('Usuario no autorizado');
+      return res.sendStatus(403);
     }
+    console.log('Usuario autorizado');
     next();
   };
 };

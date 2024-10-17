@@ -44,7 +44,7 @@ export class Paciente {
     @OneToMany(() => Progreso, progreso => progreso.patient)
     progresos!: Progreso[];
 
-    @OneToMany(() => Mensaje, mensaje => mensaje.patient)
+    @OneToMany(() => Mensaje, mensaje => mensaje.paciente)
     mensajes!: Mensaje[];
 
     @OneToMany(() => HistorialMedico, historial => historial.paciente)

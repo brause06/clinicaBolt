@@ -3,3 +3,4 @@ export enum UserRole {
   FISIOTERAPEUTA = 'fisioterapeuta',
   PACIENTE = 'paciente'
 }
+

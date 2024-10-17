@@ -28,12 +28,11 @@ export const register = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Crear nuevo usuario
-    const newUser = userRepository.create({
-      username,
-      email,
-      password: hashedPassword,
-      role: userRole
-    });
+    const newUser = new Usuario();
+    newUser.username = username;
+    newUser.email = email;
+    newUser.password = hashedPassword;
+    newUser.role = userRole;
 
     await userRepository.save(newUser);
 

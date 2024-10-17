@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm"
+import { Mensaje } from "./Mensaje"
 import { UserRole } from "../types/roles"
 
 @Entity()
@@ -16,8 +17,7 @@ export class Usuario {
     password!: string
 
     @Column({
-        type: "varchar",
-        enum: UserRole,
+        type: "text",
         default: UserRole.PACIENTE
     })
     role!: UserRole
@@ -36,4 +36,10 @@ export class Usuario {
 
     @Column({ nullable: true })
     profileImageUrl?: string
+
+    @OneToMany(() => Mensaje, mensaje => mensaje.emisor)
+    mensajesEnviados!: Mensaje[];
+
+    @OneToMany(() => Mensaje, mensaje => mensaje.receptor)
+    mensajesRecibidos!: Mensaje[];
 }
