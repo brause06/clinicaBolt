@@ -1,148 +1,128 @@
-import React, { useState, useEffect } from 'react'
-import { Activity, Plus, Check, X, Bell } from 'lucide-react'
-import { useAuth } from '../contexts/AuthContext'
-import { UserRole } from '../types/user';
-
-interface Exercise {
-  id: string;
-  name: string;
-  duration: string;
-  frequency: string;
-  completed: boolean;
-  lastCompleted?: Date;
-}
+import React, { useState, useEffect } from 'react';
+import { Ejercicio, getEjerciciosByPatient, createEjercicio, updateEjercicio, deleteEjercicio } from '../api/ejercicioService';
 
 interface ExercisePlanProps {
   patientId: number;
 }
 
 const ExercisePlan: React.FC<ExercisePlanProps> = ({ patientId }) => {
-  const { user } = useAuth()
-  const [exercises, setExercises] = useState<Exercise[]>([
-    { id: '1', name: 'Estiramiento de isquiotibiales', duration: '10 minutos', frequency: 'Diario', completed: false },
-    { id: '2', name: 'Fortalecimiento de cuádriceps', duration: '15 minutos', frequency: '3 veces por semana', completed: false },
-  ])
-  const [newExercise, setNewExercise] = useState({ name: '', duration: '', frequency: '' })
-  const [showReminder, setShowReminder] = useState(false)
+  const [ejercicios, setEjercicios] = useState<Ejercicio[]>([]);
+  const [newEjercicio, setNewEjercicio] = useState<Omit<Ejercicio, 'id'>>({
+    name: '',
+    description: '',
+    duration: 0,
+    frequency: '',
+    patientId: patientId
+  });
 
   useEffect(() => {
-    const checkExerciseReminders = () => {
-      const now = new Date()
-      const exercisesToRemind = exercises.filter(ex => {
-        if (ex.lastCompleted) {
-          const timeSinceLastCompleted = now.getTime() - ex.lastCompleted.getTime()
-          const daysSinceLastCompleted = timeSinceLastCompleted / (1000 * 3600 * 24)
-          return daysSinceLastCompleted >= 1 && !ex.completed
-        }
-        return !ex.completed
-      })
-
-      if (exercisesToRemind.length > 0) {
-        setShowReminder(true)
-      }
-    }
-
-    const intervalId = setInterval(checkExerciseReminders, 60000) // Check every minute
-    return () => clearInterval(intervalId)
-  }, [exercises])
-
-  useEffect(() => {
-    // Cargar ejercicios específicos del paciente usando patientId
-    console.log(`Cargando ejercicios para el paciente ${patientId}`);
-    // ... lógica para cargar ejercicios ...
+    fetchEjercicios();
   }, [patientId]);
 
-  const handleAddExercise = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newExercise.name && newExercise.duration && newExercise.frequency) {
-      setExercises([...exercises, { id: Date.now().toString(), ...newExercise, completed: false }])
-      setNewExercise({ name: '', duration: '', frequency: '' })
+  const fetchEjercicios = async () => {
+    try {
+      const data = await getEjerciciosByPatient(patientId);
+      setEjercicios(data);
+    } catch (error) {
+      console.error('Error fetching ejercicios:', error);
     }
-  }
+  };
 
-  const toggleExerciseCompletion = (id: string) => {
-    setExercises(exercises.map(ex => 
-      ex.id === id ? { ...ex, completed: !ex.completed, lastCompleted: new Date() } : ex
-    ))
-  }
+  const handleAddEjercicio = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const addedEjercicio = await createEjercicio(newEjercicio);
+      setEjercicios([...ejercicios, addedEjercicio]);
+      setNewEjercicio({
+        name: '',
+        description: '',
+        duration: 0,
+        frequency: '',
+        patientId: patientId
+      });
+    } catch (error) {
+      console.error('Error adding ejercicio:', error);
+    }
+  };
 
-  const dismissReminder = () => {
-    setShowReminder(false)
-  }
+  const handleUpdateEjercicio = async (id: number, updatedEjercicio: Partial<Ejercicio>) => {
+    try {
+      const updated = await updateEjercicio(id, updatedEjercicio);
+      setEjercicios(ejercicios.map(ej => ej.id === id ? updated : ej));
+    } catch (error) {
+      console.error('Error updating ejercicio:', error);
+    }
+  };
+
+  const handleDeleteEjercicio = async (id: number) => {
+    try {
+      await deleteEjercicio(id);
+      setEjercicios(ejercicios.filter(ej => ej.id !== id));
+    } catch (error) {
+      console.error('Error deleting ejercicio:', error);
+    }
+  };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md relative">
+    <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">Plan de Ejercicios</h2>
-      {showReminder && (
-        <div className="absolute top-4 right-4 bg-yellow-100 p-2 rounded-md flex items-center">
-          <Bell className="w-5 h-5 text-yellow-500 mr-2" />
-          <span>¡Recuerda completar tus ejercicios!</span>
-          <button onClick={dismissReminder} className="ml-2 text-gray-500 hover:text-gray-700">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-      <div className="space-y-4">
-        {exercises.map((exercise) => (
-          <div key={exercise.id} className="border-b pb-4 flex justify-between items-center">
-            <div>
-              <div className="flex items-center space-x-2 mb-2">
-                <Activity className="w-5 h-5 text-green-500" />
-                <span className="font-medium">{exercise.name}</span>
-              </div>
-              <p><strong>Duración:</strong> {exercise.duration}</p>
-              <p><strong>Frecuencia:</strong> {exercise.frequency}</p>
-              {exercise.lastCompleted && (
-                <p className="text-sm text-gray-500">
-                  Último completado: {exercise.lastCompleted.toLocaleDateString()}
-                </p>
-              )}
-            </div>
-            {user?.role === UserRole.PACIENTE && (
-              <button
-                onClick={() => toggleExerciseCompletion(exercise.id)}
-                className={`p-2 rounded-full ${exercise.completed ? 'bg-green-500' : 'bg-gray-200'}`}
+      <ul className="space-y-4">
+        {ejercicios.map(ejercicio => (
+          <li key={ejercicio.id} className="border-b pb-4">
+            <h3 className="font-medium">{ejercicio.name}</h3>
+            <p>{ejercicio.description}</p>
+            <p>Duración: {ejercicio.duration} minutos</p>
+            <p>Frecuencia: {ejercicio.frequency}</p>
+            <div className="mt-2">
+              <button 
+                onClick={() => handleDeleteEjercicio(ejercicio.id)}
+                className="bg-red-500 text-white px-2 py-1 rounded mr-2"
               >
-                {exercise.completed ? <Check className="w-5 h-5 text-white" /> : <X className="w-5 h-5 text-gray-500" />}
+                Eliminar
               </button>
-            )}
-          </div>
+              {/* Aquí puedes agregar un botón o lógica para editar el ejercicio */}
+            </div>
+          </li>
         ))}
-      </div>
-      {user?.role === UserRole.FISIOTERAPEUTA && (
-        <form onSubmit={handleAddExercise} className="mt-6 space-y-4">
-          <h3 className="text-xl font-semibold mb-2">Agregar Nuevo Ejercicio</h3>
-          <input
-            type="text"
-            placeholder="Nombre del ejercicio"
-            value={newExercise.name}
-            onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
-            className="w-full border rounded-md p-2"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Duración"
-            value={newExercise.duration}
-            onChange={(e) => setNewExercise({ ...newExercise, duration: e.target.value })}
-            className="w-full border rounded-md p-2"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Frecuencia"
-            value={newExercise.frequency}
-            onChange={(e) => setNewExercise({ ...newExercise, frequency: e.target.value })}
-            className="w-full border rounded-md p-2"
-            required
-          />
-          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition duration-300 flex items-center">
-            <Plus className="w-5 h-5 mr-2" /> Agregar Ejercicio
-          </button>
-        </form>
-      )}
+      </ul>
+      <form onSubmit={handleAddEjercicio} className="mt-6">
+        <input
+          type="text"
+          value={newEjercicio.name}
+          onChange={e => setNewEjercicio({...newEjercicio, name: e.target.value})}
+          placeholder="Nombre del ejercicio"
+          className="w-full p-2 border rounded mb-2"
+          required
+        />
+        <textarea
+          value={newEjercicio.description}
+          onChange={e => setNewEjercicio({...newEjercicio, description: e.target.value})}
+          placeholder="Descripción"
+          className="w-full p-2 border rounded mb-2"
+          required
+        />
+        <input
+          type="number"
+          value={newEjercicio.duration}
+          onChange={e => setNewEjercicio({...newEjercicio, duration: parseInt(e.target.value)})}
+          placeholder="Duración (minutos)"
+          className="w-full p-2 border rounded mb-2"
+          required
+        />
+        <input
+          type="text"
+          value={newEjercicio.frequency}
+          onChange={e => setNewEjercicio({...newEjercicio, frequency: e.target.value})}
+          placeholder="Frecuencia (ej. '3 veces por semana')"
+          className="w-full p-2 border rounded mb-2"
+          required
+        />
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+          Agregar Ejercicio
+        </button>
+      </form>
     </div>
-  )
-}
+  );
+};
 
-export default ExercisePlan
+export default ExercisePlan;

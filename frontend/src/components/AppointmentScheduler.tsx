@@ -251,7 +251,7 @@ const AppointmentScheduler: React.FC = () => {
           {appointments.map(appointment => (
             <li key={appointment.id} className="bg-gray-100 p-3 rounded-md flex justify-between items-center">
               <div>
-                <p><strong>Fecha:</strong> {appointment.date.toLocaleString()}</p>
+                <p><strong>Fecha:</strong> {new Date(appointment.date).toLocaleString()}</p>
                 <p><strong>Paciente:</strong> {appointment.patient.name}</p>
                 <p><strong>Fisioterapeuta:</strong> {appointment.physicianName}</p>
                 <p><strong>Estado:</strong> {appointment.status}</p>

@@ -18,23 +18,18 @@ export const getAllEjercicios = async (req: Request, res: Response) => {
 
 export const createEjercicio = async (req: Request, res: Response) => {
     try {
-        const { name, description, duration, frequency, videoUrl, imageUrl, patientId } = req.body;
-
+        const { name, description, duration, frequency, patientId } = req.body;
         const paciente = await pacienteRepository.findOne({ where: { id: patientId } });
         if (!paciente) {
             return res.status(404).json({ message: "Paciente no encontrado" });
         }
-
         const newEjercicio = ejercicioRepository.create({
             name,
             description,
             duration,
             frequency,
-            videoUrl,
-            imageUrl,
             patient: paciente
         });
-
         const result = await ejercicioRepository.save(newEjercicio);
         res.status(201).json(result);
     } catch (error) {
@@ -60,43 +55,27 @@ export const getEjercicioById = async (req: Request, res: Response) => {
 
 export const updateEjercicio = async (req: Request, res: Response) => {
     try {
-        const ejercicioId = parseInt(req.params.id);
-        const { name, description, duration, frequency, videoUrl, imageUrl, completed, lastCompleted } = req.body;
-
-        const ejercicio = await ejercicioRepository.findOne({ where: { id: ejercicioId }, relations: ["patient"] });
+        const ejercicio = await ejercicioRepository.findOneBy({ id: parseInt(req.params.id) })
         if (!ejercicio) {
-            return res.status(404).json({ message: "Ejercicio no encontrado" });
+            return res.status(404).json({ message: "Ejercicio no encontrado" })
         }
-
-        ejercicio.name = name || ejercicio.name;
-        ejercicio.description = description || ejercicio.description;
-        ejercicio.duration = duration || ejercicio.duration;
-        ejercicio.frequency = frequency || ejercicio.frequency;
-        ejercicio.videoUrl = videoUrl || ejercicio.videoUrl;
-        ejercicio.imageUrl = imageUrl || ejercicio.imageUrl;
-        ejercicio.completed = completed !== undefined ? completed : ejercicio.completed;
-        ejercicio.lastCompleted = lastCompleted ? new Date(lastCompleted) : ejercicio.lastCompleted;
-
-        const updatedEjercicio = await ejercicioRepository.save(ejercicio);
-        res.json(updatedEjercicio);
+        ejercicioRepository.merge(ejercicio, req.body)
+        const result = await ejercicioRepository.save(ejercicio)
+        res.json(result)
     } catch (error) {
-        console.error("Error al actualizar ejercicio:", error);
-        res.status(500).json({ message: "Error al actualizar ejercicio" });
+        res.status(500).json({ message: "Error al actualizar ejercicio" })
     }
 }
 
 export const deleteEjercicio = async (req: Request, res: Response) => {
     try {
-        const ejercicioId = parseInt(req.params.id);
-        const ejercicio = await ejercicioRepository.findOne({ where: { id: ejercicioId } });
-        if (!ejercicio) {
-            return res.status(404).json({ message: "Ejercicio no encontrado" });
+        const result = await ejercicioRepository.delete(req.params.id)
+        if (result.affected === 0) {
+            return res.status(404).json({ message: "Ejercicio no encontrado" })
         }
-        await ejercicioRepository.remove(ejercicio);
-        res.json({ message: "Ejercicio eliminado con éxito" });
+        res.status(204).send()
     } catch (error) {
-        console.error("Error al eliminar ejercicio:", error);
-        res.status(500).json({ message: "Error al eliminar ejercicio" });
+        res.status(500).json({ message: "Error al eliminar ejercicio" })
     }
 }
 

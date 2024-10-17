@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Calendar, FileText, Activity } from 'lucide-react'
 import axios from 'axios'
+import ExercisePlan from '../components/ExercisePlan'
 
 interface PatientDetails {
   id: number
@@ -75,6 +76,7 @@ const PatientDetails = () => {
             <Activity className="w-4 h-4 mr-2" /> Ver plan de ejercicios
           </Link>
         </div>
+        {id && <ExercisePlan patientId={parseInt(id, 10)} />}
       </div>
     </div>
   )

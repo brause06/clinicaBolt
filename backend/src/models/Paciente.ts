@@ -6,6 +6,7 @@ import { PlanTratamiento } from "./PlanTratamiento";
 import { Objetivo } from "./Objetivo";
 import { Progreso } from "./Progreso";
 import { Mensaje } from "./Mensaje";
+import { HistorialMedico } from "./HistorialMedico"
 
 @Entity("paciente")
 export class Paciente {
@@ -45,6 +46,9 @@ export class Paciente {
 
     @OneToMany(() => Mensaje, mensaje => mensaje.patient)
     mensajes!: Mensaje[];
+
+    @OneToMany(() => HistorialMedico, historial => historial.paciente)
+    historialMedico!: HistorialMedico[];
 
     @Column({ nullable: true })
     email?: string;

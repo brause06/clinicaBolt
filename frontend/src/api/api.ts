@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useAuth } from '../contexts/AuthContext';
 //import { UserRegistrationData } from '../types/user';
 
 const API_URL = 'http://localhost:3000/api';
@@ -10,6 +9,15 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Interceptor para manejar errores
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('Error en la petición API:', error.response);
+    return Promise.reject(error);
+  }
+);
 
 // Función para actualizar el token
 export const setAuthToken = (token: string | null) => {

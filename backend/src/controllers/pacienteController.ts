@@ -7,6 +7,7 @@ import { Objetivo } from "../models/Objetivo";
 import { Progreso } from "../models/Progreso";
 import { Mensaje } from "../models/Mensaje";
 import { Like, FindOptionsWhere } from "typeorm";
+import { HistorialMedico } from "../models/HistorialMedico"
 
 const pacienteRepository = AppDataSource.getRepository(Paciente)
 
@@ -252,5 +253,52 @@ export const getPacienteDetails = async (req: Request, res: Response) => {
     }
 }
 
+export const getHistorialMedico = async (req: Request, res: Response) => {
+    console.log("Obteniendo historial médico para paciente:", req.params.pacienteId);
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const historial = await AppDataSource.getRepository(HistorialMedico).find({
+            where: { paciente: { id: pacienteId } },
+            order: { fecha: "DESC" }
+        });
+        
+        console.log("Historial encontrado:", historial);
+
+        // Siempre devuelve una respuesta, incluso si el array está vacío
+        res.json(historial);
+    } catch (error) {
+        console.error("Error al obtener el historial médico del paciente:", error);
+        res.status(500).json({ message: "Error al obtener el historial médico del paciente" });
+    }
+};
+
+export const addHistorialMedico = async (req: Request, res: Response) => {
+    try {
+        const pacienteId = parseInt(req.params.pacienteId);
+        const { fecha, diagnostico, tratamiento } = req.body;
+
+        const paciente = await pacienteRepository.findOne({ where: { id: pacienteId } });
+        if (!paciente) {
+            return res.status(404).json({ message: "Paciente no encontrado" });
+        }
+
+        const nuevoHistorial = AppDataSource.getRepository(HistorialMedico).create({
+            fecha: new Date(fecha),
+            diagnostico,
+            tratamiento,
+            paciente
+        });
+
+        const resultado = await AppDataSource.getRepository(HistorialMedico).save(nuevoHistorial);
+        res.status(201).json(resultado);
+    } catch (error) {
+        console.error("Error al agregar historial médico:", error);
+        res.status(500).json({ message: "Error al agregar historial médico" });
+    }
+};
+
 // Implementa más funciones según sea necesario
+
+
+
 

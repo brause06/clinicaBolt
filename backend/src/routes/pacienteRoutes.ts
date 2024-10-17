@@ -1,5 +1,5 @@
 import express from "express"
-import { getAllPacientes, getPacienteById, createPaciente, updatePaciente, deletePaciente, getPacienteCitas, getPacienteDetails } from "../controllers/pacienteController"
+import { getAllPacientes, getPacienteById, createPaciente, updatePaciente, deletePaciente, getPacienteCitas, getPacienteDetails, getHistorialMedico, addHistorialMedico } from "../controllers/pacienteController"
 import { auth, roleAuth } from "../middleware/auth"
 import { UserRole } from "../types/roles"
 import { getEjerciciosByPatient } from "../controllers/ejercicioController"
@@ -22,5 +22,7 @@ router.get("/:pacienteId/objetivos", auth, roleAuth([UserRole.ADMIN, UserRole.FI
 router.get("/:pacienteId/progresos", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getPacienteProgresos);
 router.get("/:pacienteId/mensajes", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getPacienteMensajes);
 router.get("/:id/details", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getPacienteDetails);
+router.get("/:pacienteId/historial-medico", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getHistorialMedico)
+router.post("/:pacienteId/historial-medico", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), addHistorialMedico)
 
 export default router

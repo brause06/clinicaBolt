@@ -11,7 +11,9 @@ import progresoRoutes from "./routes/progresoRoutes"
 import mensajeRoutes from "./routes/mensajeRoutes"
 import authRoutes from "./routes/authRoutes"
 import cors from 'cors';
-
+import userRoutes from "./routes/userRoutes";
+import path from 'path';
+import fs from 'fs';
 
 const app = express()
 console.log("Servidor Express inicializado")
@@ -28,6 +30,13 @@ app.use((req, res, next) => {
   next();
 });
 
+const uploadsPath = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
+console.log("Ruta de uploads:", uploadsPath);
+app.use('/uploads', express.static(uploadsPath));
+
 app.use("/api/objetivos", objetivoRoutes)
 app.use("/api/pacientes", pacienteRoutes)
 app.use("/api/citas", citaRoutes)
@@ -37,6 +46,12 @@ app.use("/api/objetivos", objetivoRoutes)
 app.use("/api/progresos", progresoRoutes)
 app.use("/api/mensajes", mensajeRoutes)
 app.use("/api/auth", authRoutes)
+app.use("/api/users", userRoutes)
+
+app.use((req, res) => {
+  console.log(`Ruta no encontrada: ${req.method} ${req.url}`);
+  res.status(404).send('Ruta no encontrada');
+});
 
 AppDataSource.initialize()
     .then(() => {
