@@ -4,7 +4,6 @@ import AppointmentScheduler from '../components/AppointmentScheduler'
 import MedicalHistory from '../components/MedicalHistory'
 import ExercisePlan from '../components/ExercisePlan'
 import Chat from '../components/Chat'
-import PatientList from '../components/PatientList'
 import TreatmentPlan from '../components/TreatmentPlan'
 import PatientProgress from '../components/PatientProgress'
 import TreatmentGoals from '../components/TreatmentGoals'
@@ -13,19 +12,14 @@ import UserProfile from '../components/UserProfile'
 import ActivitySummary from '../components/ActivitySummary'
 import { useAuth } from '../contexts/AuthContext'
 import { UserRole } from '../types/user'
+import PatientManagement from '../components/PatientManagement'
+import { Patient } from '../types/patient' // Ajusta la ruta según sea necesario
 
-interface Patient {
-  id: number;
-  name: string;
-  age: number;
-  condition?: string;
-  lastAppointment?: string;
-}
 
 const Dashboard: React.FC = () => {
   const [activeComponent, setActiveComponent] = useState<string>('summary')
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -34,11 +28,18 @@ const Dashboard: React.FC = () => {
   }, [user])
 
   const handleSelectPatient = (patient: Patient) => {
-    setSelectedPatient(patient)
+    setSelectedPatientId(patient.id)
   }
 
   const renderComponent = () => {
     switch (activeComponent) {
+      case 'patients':
+        return (
+          <PatientManagement 
+            onSelectPatient={handleSelectPatient} 
+            selectedPatientId={selectedPatientId} 
+          />
+        );
       case 'summary':
         return <ActivitySummary />
       case 'appointments':
@@ -46,41 +47,39 @@ const Dashboard: React.FC = () => {
       case 'medical-history':
         return user?.role === UserRole.PACIENTE 
           ? <MedicalHistory patientId={user.id} /> 
-          : selectedPatient 
-            ? <MedicalHistory patientId={selectedPatient.id} /> 
+          : selectedPatientId 
+            ? <MedicalHistory patientId={selectedPatientId} />
             : <p>Seleccione un paciente para ver su historial médico.</p>
       case 'exercise-plan':
         return user?.role === UserRole.PACIENTE 
           ? <ExercisePlan patientId={user.id!} /> 
-          : selectedPatient 
-            ? <ExercisePlan patientId={selectedPatient.id} /> 
+          : selectedPatientId
+            ? <ExercisePlan patientId={selectedPatientId} />
             : <p>Seleccione un paciente para ver su plan de ejercicios.</p>
       case 'chat':
         return <Chat />
-      case 'patients':
-        return <PatientList onSelectPatient={handleSelectPatient} selectedPatientId={selectedPatient?.id || null} />
       case 'treatment-plan':
         return user?.role === UserRole.PACIENTE 
           ? <TreatmentPlan patientId={user.id} /> 
-          : selectedPatient 
-            ? <TreatmentPlan patientId={selectedPatient.id} /> 
+          : selectedPatientId
+            ? <TreatmentPlan patientId={selectedPatientId} />
             : <p>Seleccione un paciente para ver su plan de tratamiento.</p>
       case 'progress':
         return user?.role === UserRole.PACIENTE 
           ? <PatientProgress patientId={user.id} /> 
-          : selectedPatient 
-            ? <PatientProgress patientId={selectedPatient.id} /> 
+          : selectedPatientId
+            ? <PatientProgress patientId={selectedPatientId} />
             : <p>Seleccione un paciente para ver su progreso.</p>
       case 'goals':
         return user?.role === UserRole.PACIENTE 
           ? <TreatmentGoals patientId={user.id} /> 
-          : selectedPatient 
-            ? <TreatmentGoals patientId={selectedPatient.id} /> 
+          : selectedPatientId
+            ? <TreatmentGoals patientId={selectedPatientId} />
             : <p>Seleccione un paciente para ver sus objetivos de tratamiento.</p>
       case 'profile':
         return <UserProfile />
       default:
-        return <ActivitySummary />
+        return <div>Selecciona una opción del menú</div>
     }
   }
 
@@ -90,7 +89,6 @@ const Dashboard: React.FC = () => {
     { icon: <FileText size={24} />, title: "Historial Médico", id: 'medical-history' },
     { icon: <Activity size={24} />, title: "Plan de Ejercicios", id: 'exercise-plan' },
     { icon: <MessageSquare size={24} />, title: "Chat", id: 'chat' },
-    { icon: <User size={24} />, title: "Perfil", id: 'profile' },
   ]
 
   if (user?.role && user.role !== UserRole.PACIENTE) {
@@ -102,6 +100,9 @@ const Dashboard: React.FC = () => {
       { icon: <Target size={24} />, title: "Objetivos de Tratamiento", id: 'goals' }
     )
   }
+
+  // Añadir el icono de User al final del arreglo
+  navItems.push({ icon: <User size={24} />, title: "Perfil", id: 'profile' })
 
   return (
     <div className="flex h-screen bg-gray-100">

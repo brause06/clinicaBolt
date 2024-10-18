@@ -12,7 +12,7 @@ const Navbar = () => {
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="flex items-center space-x-2">
           <Activity size={24} />
-          <span className="text-xl font-bold">FisioClínica</span>
+          <span className="text-xl font-bold">Clinica Reactiva</span>
         </Link>
         <div className="flex items-center space-x-4">
           {user && (
