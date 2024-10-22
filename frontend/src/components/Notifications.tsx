@@ -1,12 +1,24 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Bell, X } from 'lucide-react'
 import { useNotifications } from '../contexts/NotificationContext'
 
+interface Notification {
+  id: string | number;  // Permitir tanto string como number
+  read: boolean;
+  type: 'info' | 'warning' | 'success';
+  message: string;
+  createdAt: string | number | Date;
+  // ... otros campos necesarios ...
+}
+
 const Notifications = () => {
-  const { notifications, markAsRead, deleteAll } = useNotifications()
+  const { notifications, markAsRead, deleteAll, lastNotificationTimestamp } = useNotifications()
   const [showNotifications, setShowNotifications] = useState(false)
 
-  const unreadCount = notifications.filter(n => !n.read).length
+  const unreadCount = useMemo(() => 
+    notifications.filter((n) => !n.read).length, 
+    [notifications, lastNotificationTimestamp]
+  );
 
   return (
     <div className="relative">
@@ -26,7 +38,7 @@ const Notifications = () => {
           <div className="py-2">
             <div className="px-4 py-2 bg-gray-100 font-semibold">Notificaciones</div>
             {notifications.length > 0 ? (
-              notifications.map(notification => (
+              notifications.map((notification: Notification) => (
                 <div 
                   key={notification.id} 
                   className={`px-4 py-2 hover:bg-gray-100 ${notification.read ? 'opacity-50' : ''}`}
@@ -51,7 +63,7 @@ const Notifications = () => {
                   </p>
                   {!notification.read && (
                     <button 
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={() => markAsRead(Number(notification.id))}
                       className="text-xs text-blue-500 hover:underline mt-1"
                     >
                       Marcar como leído

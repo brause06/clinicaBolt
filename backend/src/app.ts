@@ -8,6 +8,8 @@ import logger from './utils/logger';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import notificationRoutes from './routes/notificationRoutes';
+import bodyParser from 'body-parser';
+import { Request, Response, NextFunction } from 'express';
 
 dotenv.config();
 
@@ -33,7 +35,17 @@ export const io = new Server(httpServer, {
 logger.info("Servidor Express inicializado")
 const PORT = process.env.PORT || 3000
 
-app.use(express.json())
+app.use(bodyParser.json({
+    verify: (req: Request, res: Response, buf: Buffer, encoding: string) => {
+        try {
+            JSON.parse(buf.toString());
+        } catch (e) {
+            res.status(400).json({ error: 'JSON inválido' });
+            return;
+        }
+    }
+}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors({
   origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
   credentials: true,

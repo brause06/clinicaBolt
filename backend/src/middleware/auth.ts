@@ -21,20 +21,20 @@ export const auth = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   logger.info('Cabecera de autorización:', authHeader);
   const token = authHeader && authHeader.split(' ')[1];
-  if (token == null) {
+  if (!token) {
     logger.error('No se proporcionó token');
-    return res.sendStatus(401);
+    return res.status(401).json({ message: 'No se proporcionó token de autenticación' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET as string, (err: any, user: any) => {
-    if (err) {
-      logger.error('Error al verificar el token:', err);
-      return res.sendStatus(403);
-    }
-    logger.log('Usuario autenticado:', user);
-    req.user = user;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
+    logger.info('Usuario autenticado:', decoded);
+    req.user = decoded;
     next();
-  });
+  } catch (error) {
+    logger.error('Error al verificar el token:', error);
+    return res.status(403).json({ message: 'Token inválido' });
+  }
 };
 
 export const roleAuth = (roles: UserRole[]) => {

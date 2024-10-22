@@ -1,39 +1,53 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Bell, Trash2, Check } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 
+interface Notification {
+  id: number;
+  message: string;
+  read: boolean;
+  createdAt: Date; // Cambiado de string a Date
+  type: "info" | "warning" | "success";
+}
+
 const RealTimeNotifications: React.FC = () => {
-  const { notificationState, addNotification, markAllAsRead, deleteAll } = useNotifications();
+  const { notificationState, addNotification, markAllAsRead, deleteAll, fetchNotifications } = useNotifications();
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+
+  const handleNewNotification = useCallback((notification: Notification) => {
+    console.log('Nueva notificación recibida:', notification);
+    addNotification({
+      ...notification,
+      createdAt: new Date(notification.createdAt) // Convertir a Date si es necesario
+    });
+  }, [addNotification]);
 
   useEffect(() => {
     if (user) {
       console.log('Iniciando conexión de socket para notificaciones');
-      const socket = io('http://localhost:3000', {
+      const newSocket = io('http://localhost:3000', {
         query: { userId: user.id },
         transports: ['websocket', 'polling']
       });
 
-      socket.on('connect', () => {
+      newSocket.on('connect', () => {
         console.log('Socket conectado para notificaciones');
       });
 
-      socket.on('newNotification', (notification) => {
-        console.log('Nueva notificación recibida:', notification);
-        addNotification(notification);
-      });
+      newSocket.on('newNotification', handleNewNotification);
+
+      // Cargar notificaciones iniciales
+      fetchNotifications();
 
       return () => {
         console.log('Desconectando socket de notificaciones');
-        socket.disconnect();
+        newSocket.disconnect();
       };
     }
-  }, [user, addNotification]);
-
-  console.log('Notificaciones actuales:', notificationState);
+  }, [user, handleNewNotification, fetchNotifications]);
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();
@@ -45,6 +59,8 @@ const RealTimeNotifications: React.FC = () => {
     console.log('Todas las notificaciones eliminadas');
   };
 
+  const unreadCount = notificationState.notifications.filter(n => !n.read).length;
+
   return (
     <div className="relative">
       <button
@@ -52,9 +68,9 @@ const RealTimeNotifications: React.FC = () => {
         className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <Bell size={24} />
-        {notificationState.notifications.length > 0 && (
+        {unreadCount > 0 && (
           <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
-            {notificationState.notifications.length}
+            {unreadCount}
           </span>
         )}
       </button>
@@ -80,24 +96,25 @@ const RealTimeNotifications: React.FC = () => {
                 </button>
               </div>
             </div>
-            {notificationState.notifications.length > 0 ? (
-              notificationState.notifications.map((notification) => (
-                <div key={notification.id} className="px-4 py-2 hover:bg-gray-100">
-                  <p className={`text-sm ${
-                    notification.type === 'info' ? 'text-blue-600' :
-                    notification.type === 'warning' ? 'text-yellow-600' :
-                    'text-green-600'
-                  }`}>
-                    {notification.message}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(notification.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 text-center py-4">No hay notificaciones</p>
-            )}
+            <div className="max-h-64 overflow-y-auto">
+              {notificationState.notifications.length > 0 ? (
+                notificationState.notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`p-4 ${notification.read ? 'bg-gray-50' : 'bg-white'} border-b border-gray-200 transition-colors duration-200`}
+                  >
+                    <p className={`text-sm ${notification.read ? 'text-gray-500' : 'text-gray-900'}`}>
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(notification.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">No hay notificaciones</p>
+              )}
+            </div>
           </div>
         </div>
       )}

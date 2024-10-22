@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead, deleteAllNotifications } from '../services/notificationService';
 import { useAuth } from './AuthContext';
-import { io, Socket } from 'socket.io-client';
+import { io } from 'socket.io-client';
 
 interface Notification {
     id: number;
@@ -19,12 +19,14 @@ interface NotificationState {
 }
 
 interface NotificationContextType {
+    notifications: Notification[];
     notificationState: NotificationState;
     markAsRead: (id: number) => Promise<void>;
     fetchNotifications: (page?: number) => Promise<void>;
     markAllAsRead: () => Promise<void>;
     deleteAll: () => Promise<void>;
     addNotification: (notification: Notification) => void;
+    lastNotificationTimestamp: number;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -36,13 +38,20 @@ export const NotificationProvider: React.FC<React.PropsWithChildren> = ({ childr
         currentPage: 1,
         totalPages: 1
     });
+    const [lastNotificationTimestamp, setLastNotificationTimestamp] = useState(Date.now());
     const { user } = useAuth();
 
     const fetchNotifications = useCallback(async (page: number = 1) => {
         if (user) {
             try {
                 const response = await getNotifications(page);
-                setNotificationState(response);
+                setNotificationState(prevState => ({
+                    ...prevState,
+                    notifications: page === 1 ? response.notifications : [...prevState.notifications, ...response.notifications],
+                    hasMore: response.hasMore,
+                    currentPage: response.currentPage,
+                    totalPages: response.totalPages
+                }));
             } catch (error) {
                 console.error('Error al obtener notificaciones:', error);
             }
@@ -52,44 +61,35 @@ export const NotificationProvider: React.FC<React.PropsWithChildren> = ({ childr
     useEffect(() => {
         if (user) {
             fetchNotifications();
-        }
-    }, [user, fetchNotifications]);
-
-    useEffect(() => {
-        let socket: Socket | null = null;
-
-        if (user) {
-            const token = localStorage.getItem('token');
-            socket = io('http://localhost:3000', {
-                transports: ['websocket', 'polling'],
-                auth: { token },
-                reconnectionAttempts: 5,
-                reconnectionDelay: 1000,
-                timeout: 10000,
-            });
-
-            socket.on('connect', () => {
-                console.log('Conectado al servidor de WebSocket');
-                socket?.emit('join', user.id);
+            
+            // Configurar socket para notificaciones en tiempo real
+            const socket = io('http://localhost:3000', {
+                query: { userId: user.id }
             });
 
             socket.on('newNotification', (notification: Notification) => {
-                console.log('Nueva notificación recibida:', notification);
                 addNotification(notification);
             });
 
-            socket.on('connect_error', (error) => {
-                console.error('Error de conexión al WebSocket:', error.message);
-            });
-        }
+            // Actualizar notificaciones cada 30 segundos
+            const intervalId = setInterval(() => {
+                fetchNotifications();
+            }, 30000);
 
-        return () => {
-            if (socket) {
-                console.log('Desconectando socket');
+            return () => {
+                clearInterval(intervalId);
                 socket.disconnect();
-            }
-        };
-    }, [user]);
+            };
+        }
+    }, [user, fetchNotifications]);
+
+    const addNotification = useCallback((notification: Notification) => {
+        setNotificationState(prevState => ({
+            ...prevState,
+            notifications: [notification, ...prevState.notifications]
+        }));
+        setLastNotificationTimestamp(Date.now());
+    }, []);
 
     const markAsRead = async (id: number) => {
         try {
@@ -126,21 +126,17 @@ export const NotificationProvider: React.FC<React.PropsWithChildren> = ({ childr
         }
     };
 
-    const addNotification = (newNotification: Notification) => {
-        setNotificationState(prev => ({
-            ...prev,
-            notifications: [newNotification, ...prev.notifications]
-        }));
-    };
 
     return (
-        <NotificationContext.Provider value={{ 
-            notificationState, 
-            markAsRead, 
-            fetchNotifications, 
+        <NotificationContext.Provider value={{
+            notifications: notificationState.notifications,
+            notificationState,
+            addNotification,
+            markAsRead,
             markAllAsRead,
             deleteAll,
-            addNotification
+            lastNotificationTimestamp,
+            fetchNotifications,
         }}>
             {children}
         </NotificationContext.Provider>

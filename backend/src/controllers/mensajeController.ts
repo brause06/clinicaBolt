@@ -107,40 +107,36 @@ export const getConversacion = async (req: Request, res: Response) => {
 
 export const enviarMensaje = async (req: Request, res: Response) => {
     try {
-        const { emisorId, receptorId } = req.params
-        const { contenido } = req.body
+        const { emisorId, receptorId } = req.params;
+        const { contenido } = req.body;
 
-        const emisor = await usuarioRepository.findOne({ where: { id: parseInt(emisorId) } })
-        const receptor = await usuarioRepository.findOne({ where: { id: parseInt(receptorId) } })
+        const emisor = await usuarioRepository.findOne({ where: { id: parseInt(emisorId) } });
+        const receptor = await usuarioRepository.findOne({ where: { id: parseInt(receptorId) } });
 
         if (!emisor || !receptor) {
-            return res.status(404).json({ message: "Usuario no encontrado" })
+            return res.status(404).json({ message: "Emisor o receptor no encontrado" });
         }
 
-        const nuevoMensaje = mensajeRepository.create({
+        const mensaje = mensajeRepository.create({
             contenido,
             emisor,
             receptor,
+            fechaEnvio: new Date(),
             leido: false
-        })
+        });
 
-        await mensajeRepository.save(nuevoMensaje)
+        const mensajeGuardado = await mensajeRepository.save(mensaje);
 
-        // Crear notificación para el receptor si es un paciente
-        if (receptor.role === UserRole.PACIENTE) {
-            await createNotification(
-                receptor.id,
-                `Nuevo mensaje de ${emisor.username}`,
-                'info'
-            );
-        }
+        // Crear una notificación para el receptor
+        await createNotification(
+            parseInt(receptorId),
+            `Nuevo mensaje de ${emisor.username}`,
+            'info'
+        );
 
-        res.status(201).json(nuevoMensaje)
+        res.status(201).json(mensajeGuardado);
     } catch (error) {
-        logger.error("Error al enviar el mensaje:", error);
-        res.status(500).json({ message: "Error al enviar el mensaje" })
+        logger.error("Error al enviar mensaje:", error);
+        res.status(500).json({ message: "Error al enviar mensaje" });
     }
-}
-
-
-
+};

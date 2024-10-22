@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { User, UserRole } from '../types/user'
+import { useNotifications } from '../contexts/NotificationContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -16,6 +17,7 @@ const Login = () => {
   const [error, setError] = useState('')
   const { login } = useAuth()
   const navigate = useNavigate()
+  const notificationContext = useNotifications();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,8 +34,11 @@ const Login = () => {
       }
       const data: LoginResponse = await response.json();
       if (data.token && data.user) {
+        localStorage.setItem('authToken', data.token);
         login(data.token, data.user);
-        
+        if (notificationContext && typeof notificationContext.fetchNotifications === 'function') {
+          notificationContext.fetchNotifications();
+        }
         // Aquí podrías usar UserRole si necesitas redirigir basado en el rol
         switch(data.user.role) {
           case UserRole.PACIENTE:

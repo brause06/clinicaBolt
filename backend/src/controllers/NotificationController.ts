@@ -102,23 +102,27 @@ export const createTestNotification = async (req: Request, res: Response) => {
 
 export const markAllNotificationsAsRead = async (req: Request, res: Response) => {
     try {
+        logger.info("Iniciando markAllNotificationsAsRead");
+        logger.info("req.user:", req.user);
         if (!req.user || typeof req.user === 'string') {
-            return res.status(401).json({ message: "Usuario no autenticado" });
-        }
-        const userId = (req.user as any).id;
-        
-        const notifications = await notificationRepository.find({
-            where: { user: { id: userId }, read: false }
-        });
-        
-        for (const notification of notifications) {
-            notification.read = true;
+            logger.error("Usuario no autenticado o inválido");
+            return res.status(401).json({ message: "Usuario no autenticado o inválido" });
         }
         
-        await notificationRepository.save(notifications);
+        const userId = req.user.userId;
+        logger.info(`Marcando como leídas las notificaciones para el usuario ${userId}`);
         
-        res.json({ message: "Todas las notificaciones marcadas como leídas" });
-    } catch (error) {
+        const result = await notificationRepository
+            .createQueryBuilder()
+            .update(Notification)
+            .set({ read: true })
+            .where("userId = :userId AND read = :read", { userId, read: false })
+            .execute();
+        
+        logger.info(`Notificaciones marcadas como leídas: ${result.affected}`);
+        
+        res.json({ message: "Todas las notificaciones han sido marcadas como leídas", count: result.affected });
+    } catch (error: any) {
         logger.error("Error al marcar todas las notificaciones como leídas:", error);
         res.status(500).json({ message: "Error al marcar todas las notificaciones como leídas" });
     }

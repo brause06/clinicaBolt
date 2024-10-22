@@ -1,3 +1,4 @@
+import axios from 'axios';
 import api from '../api/api';
 
 export const getNotifications = async (page: number = 1) => {
@@ -12,9 +13,22 @@ export const markNotificationAsRead = async (id: number) => {
 
 export const markAllNotificationsAsRead = async (): Promise<void> => {
     try {
-        await api.put('/notifications/mark-all-read');
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.error('No se encontró el token de autenticación');
+            throw new Error('No se encontró el token de autenticación');
+        }
+        console.log('Token antes de la llamada:', token); // Añade este log
+        await api.put('/notifications/mark-all-read', {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
     } catch (error) {
         console.error('Error al marcar todas las notificaciones como leídas:', error);
+        if (axios.isAxiosError(error)) {
+            console.error('Detalles del error:', error.response?.data);
+        }
         throw error;
     }
 };
