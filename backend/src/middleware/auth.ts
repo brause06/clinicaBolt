@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '../types/roles';
+import logger from '../utils/logger';
 
 interface JwtPayload {
   userId: number;
@@ -15,24 +16,22 @@ declare global {
     }
   }
 }
-
 export const auth = (req: Request, res: Response, next: NextFunction) => {
-  console.log('Iniciando middleware de autenticación');
+  logger.info('Iniciando middleware de autenticación');
   const authHeader = req.headers['authorization'];
-  console.log('Cabecera de autorización:', authHeader);
+  logger.info('Cabecera de autorización:', authHeader);
   const token = authHeader && authHeader.split(' ')[1];
-
   if (token == null) {
-    console.log('No se proporcionó token');
+    logger.error('No se proporcionó token');
     return res.sendStatus(401);
   }
 
   jwt.verify(token, process.env.JWT_SECRET as string, (err: any, user: any) => {
     if (err) {
-      console.error('Error al verificar el token:', err);
+      logger.error('Error al verificar el token:', err);
       return res.sendStatus(403);
     }
-    console.log('Usuario autenticado:', user);
+    logger.log('Usuario autenticado:', user);
     req.user = user;
     next();
   });
@@ -40,14 +39,14 @@ export const auth = (req: Request, res: Response, next: NextFunction) => {
 
 export const roleAuth = (roles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    console.log('Iniciando middleware de autorización de rol');
-    console.log('Roles permitidos:', roles);
-    console.log('Rol del usuario:', req.user?.role);
+    logger.info('Iniciando middleware de autorización de rol');
+    logger.info('Roles permitidos:', roles);
+    logger.info('Rol del usuario:', req.user?.role);
     if (!req.user || !roles.includes(req.user.role)) {
-      console.log('Usuario no autorizado');
+      logger.error('Usuario no autorizado');
       return res.sendStatus(403);
     }
-    console.log('Usuario autorizado');
+    logger.info('Usuario autorizado');
     next();
   };
 };

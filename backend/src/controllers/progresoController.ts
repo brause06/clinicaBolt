@@ -1,6 +1,7 @@
 import { Request, Response } from "express"
 import { AppDataSource } from "../config/database"
 import { Progreso } from "../models/Progreso"
+import logger from '../utils/logger';
 
 const progresoRepository = AppDataSource.getRepository(Progreso)
 
@@ -78,7 +79,7 @@ export const getPacienteProgresos = async (req: Request, res: Response) => {
 
         res.json(progresos);
     } catch (error) {
-        console.error("Error al obtener los progresos del paciente:", error);
+        logger.error("Error al obtener los progresos del paciente:", error);
         res.status(500).json({ message: "Error al obtener los progresos del paciente" });
     }
 };

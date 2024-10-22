@@ -14,6 +14,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { UserRole } from '../types/user'
 import PatientManagement from '../components/PatientManagement'
 import { Patient } from '../types/patient' // Ajusta la ruta según sea necesario
+import TestNotificationButton from '../components/TestNotificationButton'
 
 
 const Dashboard: React.FC = () => {
@@ -131,6 +132,7 @@ const Dashboard: React.FC = () => {
       <main className="flex-grow p-6 overflow-y-auto">
         {renderComponent()}
       </main>
+      <TestNotificationButton />
     </div>
   )
 }

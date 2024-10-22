@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import { AppDataSource } from "../config/database"
 import { PlanTratamiento } from "../models/PlanTratamiento"
 import { Paciente } from "../models/Paciente"
+import logger from '../utils/logger';
 
 const planTratamientoRepository = AppDataSource.getRepository(PlanTratamiento)
 const pacienteRepository = AppDataSource.getRepository(Paciente)
@@ -24,7 +25,7 @@ export const getPlanTratamientoByPatient = async (req: Request, res: Response) =
         });
         res.json(planTratamiento || []); // Asegura que siempre se devuelva un array
     } catch (error) {
-        console.error("Error al obtener plan de tratamiento:", error);
+        logger.error("Error al obtener plan de tratamiento:", error);
         res.status(500).json({ message: "Error al obtener plan de tratamiento" });
     }
 };
@@ -45,7 +46,7 @@ export const createPlanTratamiento = async (req: Request, res: Response) => {
         const result = await planTratamientoRepository.save(newPlanTratamiento);
         res.status(201).json(result);
     } catch (error) {
-        console.error("Error al crear plan de tratamiento:", error);
+        logger.error("Error al crear plan de tratamiento:", error);
         res.status(500).json({ message: "Error al crear plan de tratamiento" });
     }
 }
@@ -94,7 +95,7 @@ export const deletePlanTratamiento = async (req: Request, res: Response) => {
 export const getPacientePlanesTratamiento = async (req: Request, res: Response) => {
     try {
         const pacienteId = parseInt(req.params.pacienteId);
-        console.log('Buscando planes de tratamiento para el paciente:', pacienteId);
+        logger.log('Buscando planes de tratamiento para el paciente:', pacienteId);
         const planesTratamiento = await planTratamientoRepository.find({
             where: { patient: { id: pacienteId } },
             relations: ["patient"]
@@ -106,7 +107,7 @@ export const getPacientePlanesTratamiento = async (req: Request, res: Response) 
 
         res.json(planesTratamiento);
     } catch (error) {
-        console.error("Error al obtener los planes de tratamiento del paciente:", error);
+        logger.error("Error al obtener los planes de tratamiento del paciente:", error);
         res.status(500).json({ message: "Error al obtener los planes de tratamiento del paciente" });
     }
 };

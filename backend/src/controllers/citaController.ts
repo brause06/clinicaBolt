@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import { AppDataSource } from "../config/database"
 import { Cita } from "../models/Cita"
 import { Paciente } from "../models/Paciente"
+import logger from '../utils/logger';
 
 const citaRepository = AppDataSource.getRepository(Cita)
 const pacienteRepository = AppDataSource.getRepository(Paciente)
@@ -11,7 +12,7 @@ export const getAllCitas = async (req: Request, res: Response) => {
         const citas = await citaRepository.find({ relations: ["patient"] })
         res.json(citas)
     } catch (error) {
-        console.error("Error al obtener citas:", error)
+        logger.error("Error al obtener citas:", error)
         res.status(500).json({ message: "Error al obtener citas" })
     }
 }
@@ -38,7 +39,7 @@ export const createCita = async (req: Request, res: Response) => {
         const result = await citaRepository.save(newCita);
         res.status(201).json(result);
     } catch (error) {
-        console.error("Error al crear cita:", error);
+        logger.error("Error al crear cita:", error);
         res.status(500).json({ message: "Error al crear cita" });
     }
 }
@@ -86,7 +87,7 @@ export const updateCita = async (req: Request, res: Response) => {
         const updatedCita = await citaRepository.save(cita);
         res.json(updatedCita);
     } catch (error) {
-        console.error("Error al actualizar cita:", error);
+        logger.error("Error al actualizar cita:", error);
         res.status(500).json({ message: "Error al actualizar cita" });
     }
 }
@@ -101,7 +102,7 @@ export const deleteCita = async (req: Request, res: Response) => {
         await citaRepository.remove(cita);
         res.json({ message: "Cita eliminada con éxito" });
     } catch (error) {
-        console.error("Error al eliminar cita:", error);
+        logger.error("Error al eliminar cita:", error);
         res.status(500).json({ message: "Error al eliminar cita" });
     }
 }
@@ -115,7 +116,7 @@ export const getCitasByPatient = async (req: Request, res: Response) => {
         });
         res.json(citas);
     } catch (error) {
-        console.error("Error al obtener citas del paciente:", error);
+        logger.error("Error al obtener citas del paciente:", error);
         res.status(500).json({ message: "Error al obtener citas del paciente" });
     }
 }

@@ -5,6 +5,7 @@ import { AppDataSource } from '../config/database';
 import { Usuario } from '../models/Usuario';
 import { UserRole } from '../types/roles';
 import { Paciente } from '../models/Paciente';
+import logger from '../utils/logger';
 
 const userRepository = AppDataSource.getRepository(Usuario);
 const pacienteRepository = AppDataSource.getRepository(Paciente);
@@ -52,7 +53,7 @@ export const register = async (req: Request, res: Response) => {
 
     res.status(201).json({ message: 'Usuario registrado exitosamente' });
   } catch (error) {
-    console.error('Error al registrar usuario:', error);
+    logger.error('Error al registrar usuario:', error);
     res.status(500).json({ message: 'Error al registrar usuario' });
   }
 };

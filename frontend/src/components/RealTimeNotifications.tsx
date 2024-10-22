@@ -1,31 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
-
-interface Notification {
-  id: string;
-  message: string;
-  type: 'info' | 'warning' | 'success';
-  timestamp: Date;
-}
+import { Bell, Trash2, Check } from 'lucide-react';
+import { io } from 'socket.io-client';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 
 const RealTimeNotifications: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { notificationState, addNotification, markAllAsRead, deleteAll } = useNotifications();
+  const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
-    // Simulación de recepción de notificaciones en tiempo real
-    const interval = setInterval(() => {
-      const newNotification: Notification = {
-        id: Date.now().toString(),
-        message: `Nueva notificación ${Date.now()}`,
-        type: ['info', 'warning', 'success'][Math.floor(Math.random() * 3)] as 'info' | 'warning' | 'success',
-        timestamp: new Date(),
-      };
-      setNotifications(prevNotifications => [...prevNotifications, newNotification]);
-    }, 30000); // Cada 30 segundos
+    if (user) {
+      console.log('Iniciando conexión de socket para notificaciones');
+      const socket = io('http://localhost:3000', {
+        query: { userId: user.id },
+        transports: ['websocket', 'polling']
+      });
 
-    return () => clearInterval(interval);
-  }, []);
+      socket.on('connect', () => {
+        console.log('Socket conectado para notificaciones');
+      });
+
+      socket.on('newNotification', (notification) => {
+        console.log('Nueva notificación recibida:', notification);
+        addNotification(notification);
+      });
+
+      return () => {
+        console.log('Desconectando socket de notificaciones');
+        socket.disconnect();
+      };
+    }
+  }, [user, addNotification]);
+
+  console.log('Notificaciones actuales:', notificationState);
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+    console.log('Todas las notificaciones marcadas como leídas');
+  };
+
+  const handleDeleteAll = async () => {
+    await deleteAll();
+    console.log('Todas las notificaciones eliminadas');
+  };
 
   return (
     <div className="relative">
@@ -34,18 +52,36 @@ const RealTimeNotifications: React.FC = () => {
         className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <Bell size={24} />
-        {notifications.length > 0 && (
+        {notificationState.notifications.length > 0 && (
           <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
-            {notifications.length}
+            {notificationState.notifications.length}
           </span>
         )}
       </button>
       {showNotifications && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-20">
           <div className="py-2">
-            <div className="px-4 py-2 bg-gray-100 font-semibold">Notificaciones</div>
-            {notifications.length > 0 ? (
-              notifications.map(notification => (
+            <div className="px-4 py-2 bg-gray-100 font-semibold flex justify-between items-center">
+              <span>Notificaciones</span>
+              <div>
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="text-blue-600 hover:text-blue-800 mr-2"
+                  title="Marcar todas como leídas"
+                >
+                  <Check size={18} />
+                </button>
+                <button
+                  onClick={handleDeleteAll}
+                  className="text-red-600 hover:text-red-800"
+                  title="Eliminar todas"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>
+            {notificationState.notifications.length > 0 ? (
+              notificationState.notifications.map((notification) => (
                 <div key={notification.id} className="px-4 py-2 hover:bg-gray-100">
                   <p className={`text-sm ${
                     notification.type === 'info' ? 'text-blue-600' :
@@ -55,7 +91,7 @@ const RealTimeNotifications: React.FC = () => {
                     {notification.message}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {notification.timestamp.toLocaleString()}
+                    {new Date(notification.createdAt).toLocaleString()}
                   </p>
                 </div>
               ))

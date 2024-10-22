@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import { AppDataSource } from "../config/database"
 import { Ejercicio } from "../models/Ejercicio"
 import { Paciente } from "../models/Paciente"
+import logger from '../utils/logger';
 
 const ejercicioRepository = AppDataSource.getRepository(Ejercicio)
 const pacienteRepository = AppDataSource.getRepository(Paciente)
@@ -11,7 +12,7 @@ export const getAllEjercicios = async (req: Request, res: Response) => {
         const ejercicios = await ejercicioRepository.find({ relations: ["patient"] })
         res.json(ejercicios)
     } catch (error) {
-        console.error("Error al obtener ejercicios:", error)
+        logger.error("Error al obtener ejercicios:", error)
         res.status(500).json({ message: "Error al obtener ejercicios" })
     }
 }
@@ -48,7 +49,7 @@ export const createEjercicio = async (req: Request, res: Response) => {
 
         res.status(201).json(ejercicioResponse);
     } catch (error) {
-        console.error("Error al crear ejercicio:", error);
+        logger.error("Error al crear ejercicio:", error);
         res.status(500).json({ message: "Error al crear ejercicio" });
     }
 }

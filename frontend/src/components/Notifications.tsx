@@ -1,42 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Bell, X } from 'lucide-react'
-import { useAuth } from '../contexts/AuthContext'
-
-interface Notification {
-  id: string;
-  message: string;
-  type: 'info' | 'warning' | 'success';
-  timestamp: Date;
-  read: boolean;
-}
+import { useNotifications } from '../contexts/NotificationContext'
 
 const Notifications = () => {
-  const { user } = useAuth()
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const { notifications, markAsRead, deleteAll } = useNotifications()
   const [showNotifications, setShowNotifications] = useState(false)
 
-  useEffect(() => {
-    // Simular la carga de notificaciones
-    const mockNotifications: Notification[] = [
-      { id: '1', message: 'Recordatorio: Tienes una cita mañana a las 10:00', type: 'info', timestamp: new Date(), read: false },
-      { id: '2', message: 'Nuevo mensaje de tu fisioterapeuta', type: 'info', timestamp: new Date(), read: false },
-      { id: '3', message: 'No olvides completar tus ejercicios hoy', type: 'warning', timestamp: new Date(), read: false },
-      { id: '4', message: '¡Felicidades! Has alcanzado tu objetivo semanal', type: 'success', timestamp: new Date(), read: false },
-    ]
-    setNotifications(mockNotifications)
-  }, [])
-
   const unreadCount = notifications.filter(n => !n.read).length
-
-  const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, read: true } : n
-    ))
-  }
-
-  const removeNotification = (id: string) => {
-    setNotifications(notifications.filter(n => n.id !== id))
-  }
 
   return (
     <div className="relative">
@@ -70,14 +40,14 @@ const Notifications = () => {
                       {notification.message}
                     </p>
                     <button 
-                      onClick={() => removeNotification(notification.id)}
+                      onClick={() => deleteAll()}
                       className="text-gray-400 hover:text-gray-600"
                     >
                       <X size={16} />
                     </button>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    {notification.timestamp.toLocaleString()}
+                    {new Date(notification.createdAt).toLocaleString()}
                   </p>
                   {!notification.read && (
                     <button 

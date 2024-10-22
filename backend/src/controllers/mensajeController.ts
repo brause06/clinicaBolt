@@ -2,7 +2,9 @@ import { Request, Response, NextFunction } from "express"
 import { AppDataSource } from "../config/database"
 import { Mensaje } from "../models/Mensaje"
 import { Usuario } from "../models/Usuario"
-import { UserRole } from "../types/roles"
+import logger from '../utils/logger';
+import { UserRole } from '../types/roles';
+import { createNotification } from './NotificationController';
 
 const mensajeRepository = AppDataSource.getRepository(Mensaje)
 const usuarioRepository = AppDataSource.getRepository(Usuario)
@@ -81,7 +83,7 @@ export const getPacienteMensajes = async (req: Request, res: Response) => {
 
         res.json(mensajes);
     } catch (error) {
-        console.error("Error al obtener los mensajes del paciente:", error);
+        logger.error("Error al obtener los mensajes del paciente:", error);
         res.status(500).json({ message: "Error al obtener los mensajes del paciente" });
     }
 };
@@ -123,10 +125,22 @@ export const enviarMensaje = async (req: Request, res: Response) => {
         })
 
         await mensajeRepository.save(nuevoMensaje)
+
+        // Crear notificación para el receptor si es un paciente
+        if (receptor.role === UserRole.PACIENTE) {
+            await createNotification(
+                receptor.id,
+                `Nuevo mensaje de ${emisor.username}`,
+                'info'
+            );
+        }
+
         res.status(201).json(nuevoMensaje)
     } catch (error) {
+        logger.error("Error al enviar el mensaje:", error);
         res.status(500).json({ message: "Error al enviar el mensaje" })
     }
 }
+
 
 

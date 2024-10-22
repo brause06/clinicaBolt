@@ -10,6 +10,7 @@ import { Like, FindOptionsWhere } from "typeorm";
 import { HistorialMedico } from "../models/HistorialMedico"
 import { Ejercicio } from "../models/Ejercicio"
 import { UserRole } from "../types/roles"
+import logger from '../utils/logger';
 
 const pacienteRepository = AppDataSource.getRepository(Paciente)
 
@@ -42,7 +43,7 @@ export const getAllPacientes = async (req: Request, res: Response) => {
             totalPages: Math.ceil(total / Number(limit))
         })
     } catch (error) {
-        console.error("Error al obtener pacientes:", error)
+        logger.error("Error al obtener pacientes:", error)
         res.status(500).json({ message: "Error al obtener pacientes" })
     }
 }
@@ -64,7 +65,7 @@ export const createPaciente = async (req: Request, res: Response) => {
         const result = await pacienteRepository.save(newPaciente);
         res.status(201).json(result);
     } catch (error) {
-        console.error("Error al crear paciente:", error);
+        logger.error("Error al crear paciente:", error);
         res.status(500).json({ message: "Error al crear paciente" });
     }
 };
@@ -80,7 +81,7 @@ export const getPacienteById = async (req: Request, res: Response) => {
 
         res.json(paciente)
     } catch (error) {
-        console.error("Error al obtener paciente:", error)
+        logger.error("Error al obtener paciente:", error)
         res.status(500).json({ message: "Error al obtener paciente" })
     }
 }
@@ -108,7 +109,7 @@ export const updatePaciente = async (req: Request, res: Response) => {
         const updatedPaciente = await pacienteRepository.save(paciente);
         res.json(updatedPaciente);
     } catch (error) {
-        console.error("Error al actualizar paciente:", error);
+        logger.error("Error al actualizar paciente:", error);
         res.status(500).json({ message: "Error al actualizar paciente" });
     }
 };
@@ -139,7 +140,7 @@ export const getPacienteCitas = async (req: Request, res: Response) => {
         
         res.json(citas);
     } catch (error) {
-        console.error("Error al obtener las citas del paciente:", error);
+        logger.error("Error al obtener las citas del paciente:", error);
         res.status(500).json({ message: "Error al obtener las citas del paciente" });
     }
 };
@@ -158,7 +159,7 @@ export const getPacientePlanTratamiento = async (req: Request, res: Response) =>
         
         res.json(planTratamiento);
     } catch (error) {
-        console.error("Error al obtener el plan de tratamiento del paciente:", error);
+        logger.error("Error al obtener el plan de tratamiento del paciente:", error);
         res.status(500).json({ message: "Error al obtener el plan de tratamiento del paciente" });
     }
 };
@@ -177,7 +178,7 @@ export const getPacienteObjetivos = async (req: Request, res: Response) => {
         
         res.json(objetivos);
     } catch (error) {
-        console.error("Error al obtener los objetivos del paciente:", error);
+        logger.error("Error al obtener los objetivos del paciente:", error);
         res.status(500).json({ message: "Error al obtener los objetivos del paciente" });
     }
 };
@@ -196,7 +197,7 @@ export const getPacienteProgresos = async (req: Request, res: Response) => {
         
         res.json(progresos);
     } catch (error) {
-        console.error("Error al obtener los progresos del paciente:", error);
+        logger.error("Error al obtener los progresos del paciente:", error);
         res.status(500).json({ message: "Error al obtener los progresos del paciente" });
     }
 };
@@ -215,7 +216,7 @@ export const getPacienteMensajes = async (req: Request, res: Response) => {
         
         res.json(mensajes);
     } catch (error) {
-        console.error("Error al obtener los mensajes del paciente:", error);
+        logger.error("Error al obtener los mensajes del paciente:", error);
         res.status(500).json({ message: "Error al obtener los mensajes del paciente" });
     }
 };
@@ -250,13 +251,13 @@ export const getPacienteDetails = async (req: Request, res: Response) => {
 
         res.json(patientDetails)
     } catch (error) {
-        console.error("Error al obtener detalles del paciente:", error)
+        logger.error("Error al obtener detalles del paciente:", error)
         res.status(500).json({ message: "Error al obtener detalles del paciente" })
     }
 }
 
 export const getHistorialMedico = async (req: Request, res: Response) => {
-    console.log("Obteniendo historial médico para paciente:", req.params.pacienteId);
+    logger.info("Obteniendo historial médico para paciente:", req.params.pacienteId);
     try {
         const pacienteId = parseInt(req.params.pacienteId);
         const historial = await AppDataSource.getRepository(HistorialMedico).find({
@@ -264,12 +265,12 @@ export const getHistorialMedico = async (req: Request, res: Response) => {
             order: { fecha: "DESC" }
         });
         
-        console.log("Historial encontrado:", historial);
+        logger.info("Historial encontrado:", historial);
 
         // Siempre devuelve una respuesta, incluso si el array está vacío
         res.json(historial);
     } catch (error) {
-        console.error("Error al obtener el historial médico del paciente:", error);
+        logger.error("Error al obtener el historial médico del paciente:", error);
         res.status(500).json({ message: "Error al obtener el historial médico del paciente" });
     }
 };
@@ -294,28 +295,28 @@ export const addHistorialMedico = async (req: Request, res: Response) => {
         const resultado = await AppDataSource.getRepository(HistorialMedico).save(nuevoHistorial);
         res.status(201).json(resultado);
     } catch (error) {
-        console.error("Error al agregar historial médico:", error);
+        logger.error("Error al agregar historial médico:", error);
         res.status(500).json({ message: "Error al agregar historial médico" });
     }
 };
 
 export const getEjerciciosByPatient = async (req: Request, res: Response) => {
-  console.log("Received request for patient exercises");
-  console.log("Request params:", req.params);
-  console.log("Authenticated user:", req.user);
+  logger.info("Received request for patient exercises");
+  logger.info("Request params:", req.params);
+  logger.info("Authenticated user:", req.user);
   
   try {
     const pacienteId = parseInt(req.params.pacienteId);
-    console.log("Parsed patient ID:", pacienteId);
+    logger.info("Parsed patient ID:", pacienteId);
     
     if (isNaN(pacienteId)) {
-      console.log("Invalid patient ID");
+      logger.info("Invalid patient ID");
       return res.status(400).json({ message: "ID de paciente no válido" });
     }
 
     // Verificar permisos
     if (req.user?.role === UserRole.PACIENTE && req.user?.userId!== pacienteId) {
-      console.log("Patient trying to access another patient's exercises");
+      logger.info("Patient trying to access another patient's exercises");
       return res.status(403).json({ message: "No tiene permiso para acceder a los ejercicios de este paciente" });
     }
 
@@ -325,17 +326,17 @@ export const getEjerciciosByPatient = async (req: Request, res: Response) => {
       relations: ["ejercicios"]
     });
 
-    console.log("Found patient:", paciente);
+    logger.info("Found patient:", paciente);
 
     if (!paciente) {
-      console.log("Patient not found");
+      logger.info("Patient not found");
       return res.status(404).json({ message: "Paciente no encontrado" });
     }
 
-    console.log("Exercises found:", paciente.ejercicios);
+    logger.info("Exercises found:", paciente.ejercicios);
     res.json(paciente.ejercicios || []);
   } catch (error) {
-    console.error("Error al obtener ejercicios del paciente:", error);
+    logger.error("Error al obtener ejercicios del paciente:", error);
     res.status(500).json({ 
       message: "Error al obtener ejercicios del paciente", 
       error: error instanceof Error ? error.message : String(error) 
@@ -344,6 +345,7 @@ export const getEjerciciosByPatient = async (req: Request, res: Response) => {
 }
 
 // Implementa más funciones según sea necesario
+
 
 
 

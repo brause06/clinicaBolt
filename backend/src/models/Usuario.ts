@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm"
 import { Mensaje } from "./Mensaje"
 import { UserRole } from "../types/roles"
+import { Notification } from "./Notification"
 
 @Entity()
 export class Usuario {
@@ -42,4 +43,7 @@ export class Usuario {
 
     @OneToMany(() => Mensaje, mensaje => mensaje.receptor)
     mensajesRecibidos!: Mensaje[];
+
+    @OneToMany(() => Notification, notification => notification.user)
+    notifications!: Notification[];
 }

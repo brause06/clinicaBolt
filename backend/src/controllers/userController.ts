@@ -5,6 +5,7 @@ import multer from 'multer'
 import path from 'path'
 import fs from 'fs'
 import { UserRole } from "../types/roles"
+import logger from '../utils/logger';
 
 // Configuración de multer para la carga de archivos
 const storage = multer.diskStorage({
@@ -59,11 +60,11 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
         const updatedUsuario = await userRepository.save(usuario);
         
-        console.log('Usuario actualizado:', updatedUsuario);
+        logger.log('Usuario actualizado:', updatedUsuario);
         
         res.json(updatedUsuario);
     } catch (error) {
-        console.error("Error al actualizar perfil de usuario:", error);
+        logger.error("Error al actualizar perfil de usuario:", error);
         res.status(500).json({ message: "Error al actualizar perfil de usuario" });
     }
 }
@@ -78,7 +79,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
         })
         res.json(usersWithoutPassword)
     } catch (error) {
-        console.error("Error al obtener usuarios:", error)
+        logger.error("Error al obtener usuarios:", error)
         res.status(500).json({ message: "Error al obtener usuarios" })
     }
 }
