@@ -9,7 +9,7 @@ import './index.css'  // Asegúrate de que este archivo exista y contenga tus es
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
+      <AuthProvider key={localStorage.getItem('authToken') || 'logout'}>
         <NotificationProvider>
           <App />
         </NotificationProvider>

@@ -61,9 +61,9 @@ const Dashboard: React.FC = () => {
         return <Chat />
       case 'treatment-plan':
         return user?.role === UserRole.PACIENTE 
-          ? <TreatmentPlan patientId={user.id} /> 
+          ? <TreatmentPlan patientId={user.id}  /> 
           : selectedPatientId
-            ? <TreatmentPlan patientId={selectedPatientId} />
+            ? <TreatmentPlan patientId={selectedPatientId}  />
             : <p>Seleccione un paciente para ver su plan de tratamiento.</p>
       case 'progress':
         return user?.role === UserRole.PACIENTE 
@@ -89,7 +89,6 @@ const Dashboard: React.FC = () => {
     { icon: <Calendar size={24} />, title: "Citas", id: 'appointments' },
     { icon: <FileText size={24} />, title: "Historial Médico", id: 'medical-history' },
     { icon: <Activity size={24} />, title: "Plan de Ejercicios", id: 'exercise-plan' },
-    { icon: <MessageSquare size={24} />, title: "Chat", id: 'chat' },
   ]
 
   if (user?.role && user.role !== UserRole.PACIENTE) {
@@ -97,12 +96,13 @@ const Dashboard: React.FC = () => {
     navItems.splice(1, 0, { icon: <Users size={24} />, title: "Pacientes", id: 'patients' })
     navItems.push(
       { icon: <ClipboardList size={24} />, title: "Plan de Tratamiento", id: 'treatment-plan' },
+      { icon: <Target size={24} />, title: "Objetivos de Tratamiento", id: 'goals' },
       { icon: <TrendingUp size={24} />, title: "Progreso del Paciente", id: 'progress' },
-      { icon: <Target size={24} />, title: "Objetivos de Tratamiento", id: 'goals' }
     )
   }
 
   // Añadir el icono de User al final del arreglo
+  navItems.push({ icon: <MessageSquare size={24} />, title: "Mensajes", id: 'messages' })
   navItems.push({ icon: <User size={24} />, title: "Perfil", id: 'profile' })
 
   return (

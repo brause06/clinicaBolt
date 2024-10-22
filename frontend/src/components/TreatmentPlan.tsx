@@ -65,7 +65,7 @@ const TreatmentPlan: React.FC<TreatmentPlanProps> = ({ patientId }) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-4">Plan de Tratamiento para Paciente {patientId}</h2>
+      <h2 className="text-2xl font-semibold mb-4">Plan de Tratamiento</h2>
       {isLoading && <p>Cargando planes de tratamiento...</p>}
       {error && <p className="text-red-500">{error}</p>}
       {!isLoading && !error && treatments.length === 0 && <p>No hay planes de tratamiento para este paciente.</p>}
