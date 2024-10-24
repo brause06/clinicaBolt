@@ -6,6 +6,9 @@ import path from 'path'
 import fs from 'fs'
 import { UserRole } from "../types/roles"
 import logger from '../utils/logger';
+import { Like } from "typeorm"
+
+const usuarioRepository = AppDataSource.getRepository(Usuario)
 
 // Configuración de multer para la carga de archivos
 const storage = multer.diskStorage({
@@ -83,6 +86,17 @@ export const getAllUsers = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Error al obtener usuarios" })
     }
 }
+
+export const getUsersByUsername = async (req: Request, res: Response) => {
+    try {
+        const { username } = req.query;
+        const users = await usuarioRepository.find({ where: { username: Like(`%${username}%`) } });
+        res.json(users);
+    } catch (error) {
+        logger.error("Error al buscar usuarios por nombre de usuario:", error);
+        res.status(500).json({ message: "Error al buscar usuarios" });
+    }
+};
 
 // Exporta el middleware de carga de archivos
 export const uploadProfilePicture = upload.single('profilePicture')

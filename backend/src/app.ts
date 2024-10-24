@@ -10,6 +10,7 @@ import { Server } from 'socket.io';
 import notificationRoutes from './routes/notificationRoutes';
 import bodyParser from 'body-parser';
 import { Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 
 dotenv.config();
 
@@ -56,11 +57,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Configurar la carpeta de uploads
 const uploadsPath = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
 }
 logger.info("Ruta de uploads:", uploadsPath);
+
+// Servir archivos estáticos desde la carpeta uploads
+app.use('/uploads', express.static(uploadsPath));
 
 console.log("Configurando rutas");
 app.use("/api/objetivos", objetivoRoutes)
@@ -74,6 +79,8 @@ app.use("/api/mensajes", mensajeRoutes)
 app.use("/api/auth", authRoutes)
 app.use("/api/users", userRoutes)
 app.use('/api/notifications', notificationRoutes)
+
+const upload = multer({ dest: 'uploads/' });
 
 // Middleware de manejo de errores global
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

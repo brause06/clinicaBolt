@@ -15,6 +15,12 @@ export class HistorialMedico {
     @Column()
     tratamiento!: string;
 
+    @Column({ nullable: true })
+    fotoInicial?: string;
+
+    @Column({ nullable: true })
+    fotoFinal?: string;
+
     @ManyToOne(() => Paciente, paciente => paciente.historialMedico)
     paciente!: Paciente;
 }

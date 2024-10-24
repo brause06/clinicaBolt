@@ -1,8 +1,9 @@
 import express from "express"
 import multer from "multer"
 import path from "path"
-import { getUserProfile, updateUserProfile, uploadProfilePicture, getAllUsers } from "../controllers/userController"
-import { auth } from "../middleware/auth"
+import { getUserProfile, updateUserProfile, uploadProfilePicture, getAllUsers, getUsersByUsername } from "../controllers/userController"
+import { auth, roleAuth } from "../middleware/auth"
+import { UserRole } from "../types/roles"
 
 const router = express.Router()
 
@@ -20,6 +21,6 @@ const upload = multer({ storage: storage })
 
 router.get("/profile/:id", auth, getUserProfile)
 router.put("/profile/:id", auth, upload.single('profileImage'), updateUserProfile)
-router.get("/", auth, getAllUsers)
+router.get("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getUsersByUsername)
 
 export default router

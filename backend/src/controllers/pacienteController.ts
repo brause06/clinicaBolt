@@ -279,6 +279,17 @@ export const addHistorialMedico = async (req: Request, res: Response) => {
     try {
         const pacienteId = parseInt(req.params.pacienteId);
         const { fecha, diagnostico, tratamiento } = req.body;
+        const fotoInicial = req.file ? req.file.filename : undefined;
+
+        console.log("Datos recibidos en el backend:", { pacienteId, fecha, diagnostico, tratamiento, fotoInicial });
+
+        // Validación de campos requeridos
+        if (!fecha || !diagnostico || !tratamiento) {
+            return res.status(400).json({ 
+                message: "Fecha, diagnóstico y tratamiento son campos requeridos",
+                missingFields: { fecha: !fecha, diagnostico: !diagnostico, tratamiento: !tratamiento }
+            });
+        }
 
         const paciente = await pacienteRepository.findOne({ where: { id: pacienteId } });
         if (!paciente) {
@@ -289,14 +300,18 @@ export const addHistorialMedico = async (req: Request, res: Response) => {
             fecha: new Date(fecha),
             diagnostico,
             tratamiento,
+            fotoInicial,
             paciente
         });
 
         const resultado = await AppDataSource.getRepository(HistorialMedico).save(nuevoHistorial);
         res.status(201).json(resultado);
     } catch (error) {
-        logger.error("Error al agregar historial médico:", error);
-        res.status(500).json({ message: "Error al agregar historial médico" });
+        console.error("Error detallado:", error);
+        res.status(500).json({ 
+            message: "Error al agregar historial médico", 
+            error: error instanceof Error ? error.message : String(error) 
+        });
     }
 };
 
@@ -344,7 +359,44 @@ export const getEjerciciosByPatient = async (req: Request, res: Response) => {
   }
 }
 
+export const updateHistorialMedico = async (req: Request, res: Response) => {
+    try {
+        const historialId = parseInt(req.params.historialId);
+        const { fecha, diagnostico, tratamiento } = req.body;
+        const fotoFinal = req.file ? req.file.filename : undefined;
+
+        const historialRepository = AppDataSource.getRepository(HistorialMedico);
+        const historial = await historialRepository.findOne({ where: { id: historialId } });
+
+        if (!historial) {
+            return res.status(404).json({ message: "Historial médico no encontrado" });
+        }
+
+        // Actualiza los campos si se proporcionan
+        if (fecha) historial.fecha = new Date(fecha);
+        if (diagnostico) historial.diagnostico = diagnostico;
+        if (tratamiento) historial.tratamiento = tratamiento;
+        if (fotoFinal) historial.fotoFinal = fotoFinal;
+
+        const resultado = await historialRepository.save(historial);
+        res.json(resultado);
+    } catch (error) {
+        console.error("Error al actualizar historial médico:", error);
+        res.status(500).json({ message: "Error al actualizar historial médico" });
+    }
+};
+
 // Implementa más funciones según sea necesario
+
+
+
+
+
+
+
+
+
+
 
 
 

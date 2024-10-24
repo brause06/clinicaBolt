@@ -3,14 +3,8 @@ import { Bell, Trash2, Check } from 'lucide-react';
 import { io } from 'socket.io-client';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
-
-interface Notification {
-  id: number;
-  message: string;
-  read: boolean;
-  createdAt: Date; // Cambiado de string a Date
-  type: "info" | "warning" | "success";
-}
+import { toast } from 'react-toastify';
+import { Notification } from '../types/notification';
 
 const RealTimeNotifications: React.FC = () => {
   const { notificationState, addNotification, markAllAsRead, deleteAll, fetchNotifications } = useNotifications();
@@ -21,8 +15,21 @@ const RealTimeNotifications: React.FC = () => {
     console.log('Nueva notificación recibida:', notification);
     addNotification({
       ...notification,
-      createdAt: new Date(notification.createdAt) // Convertir a Date si es necesario
+      createdAt: new Date(notification.createdAt)
     });
+
+    // Mostrar una alerta o toast para notificaciones importantes
+    if (notification.type === 'appointment' || notification.type === 'treatment') {
+      // Puedes usar una librería como react-toastify aquí
+      toast.info(notification.message, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    }
   }, [addNotification]);
 
   useEffect(() => {
@@ -78,7 +85,7 @@ const RealTimeNotifications: React.FC = () => {
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg overflow-hidden z-20">
           <div className="py-2">
             <div className="px-4 py-2 bg-gray-100 font-semibold flex justify-between items-center">
-              <span>Notificaciones</span>
+              <span className="text-lg text-black font-bold">Notificaciones</span>
               <div>
                 <button
                   onClick={handleMarkAllAsRead}

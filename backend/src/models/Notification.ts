@@ -9,8 +9,11 @@ export class Notification {
   @Column()
   message!: string;
 
-  @Column()
-  type!: 'info' | 'warning' | 'success';
+  @Column({
+    type: "varchar",
+    enum: ["info", "warning", "success", "appointment", "treatment"],
+  })
+  type!: 'info' | 'warning' | 'success' | 'appointment' | 'treatment';
 
   @Column({ default: false })
   read!: boolean;

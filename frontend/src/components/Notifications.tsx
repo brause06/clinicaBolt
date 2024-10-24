@@ -1,19 +1,13 @@
 import React, { useState, useMemo } from 'react'
 import { Bell, X } from 'lucide-react'
 import { useNotifications } from '../contexts/NotificationContext'
+import { Notification } from '../types/notification'
 
-interface Notification {
-  id: string | number;  // Permitir tanto string como number
-  read: boolean;
-  type: 'info' | 'warning' | 'success';
-  message: string;
-  createdAt: string | number | Date;
-  // ... otros campos necesarios ...
-}
 
 const Notifications = () => {
   const { notifications, markAsRead, deleteAll, lastNotificationTimestamp } = useNotifications()
   const [showNotifications, setShowNotifications] = useState(false)
+  
 
   const unreadCount = useMemo(() => 
     notifications.filter((n) => !n.read).length, 
@@ -41,12 +35,15 @@ const Notifications = () => {
               notifications.map((notification: Notification) => (
                 <div 
                   key={notification.id} 
-                  className={`px-4 py-2 hover:bg-gray-100 ${notification.read ? 'opacity-50' : ''}`}
+                  className={`px-4 py-2 hover:bg-gray-100 ${notification.read ? 'opacity-50' : ''} ${
+                    notification.type === 'appointment' ? 'bg-purple-100' : ''
+                  }`}
                 >
                   <div className="flex justify-between items-start">
                     <p className={`text-sm ${
                       notification.type === 'info' ? 'text-blue-600' :
                       notification.type === 'warning' ? 'text-yellow-600' :
+                      notification.type === 'appointment' ? 'text-purple-600' :
                       'text-green-600'
                     }`}>
                       {notification.message}

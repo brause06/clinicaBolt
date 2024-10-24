@@ -1,15 +1,17 @@
-import React from 'react'
-import { Outlet } from 'react-router-dom'
-import Navbar from './Navbar'
+import React, { ReactNode } from 'react'
+import Navbar from './Navbar'; // Asegúrate de que la ruta sea correcta
 
-const Layout = () => {
-  return (
-    <>
-      <Navbar />
-      <Outlet />
-    </>
-  )
+interface LayoutProps {
+  children: ReactNode;
 }
 
-export default Layout
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  return (
+    <div className="layout">
+      <Navbar /> {/* Asegúrate de que el Navbar esté aquí */}
+      {children}
+    </div>
+  );
+};
 
+export default Layout

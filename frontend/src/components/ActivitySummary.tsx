@@ -3,13 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { Users, Calendar, Clock, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { UserRole } from '../types/user';
-
-interface Notification {
-  id: string;
-  message: string;
-  type: 'info' | 'warning' | 'success';
-  timestamp: Date;
-}
+import { Notification } from '../types/notification';
 
 interface ActivitySummaryProps {
   notifications?: Notification[];
@@ -89,7 +83,9 @@ const ActivitySummary: React.FC<ActivitySummaryProps> = ({ notifications = [] })
               <li key={notification.id} className={`p-2 rounded ${
                 notification.type === 'info' ? 'bg-blue-100' :
                 notification.type === 'warning' ? 'bg-yellow-100' :
-                'bg-green-100'
+                notification.type === 'success' ? 'bg-green-100' :
+                notification.type === 'appointment' ? 'bg-purple-100' :
+                'bg-pink-100'
               }`}>
                 {notification.message}
               </li>

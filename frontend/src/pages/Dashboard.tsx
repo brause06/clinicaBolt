@@ -14,18 +14,24 @@ import { useAuth } from '../contexts/AuthContext'
 import { UserRole } from '../types/user'
 import PatientManagement from '../components/PatientManagement'
 import { Patient } from '../types/patient' // Ajusta la ruta según sea necesario
-import TestNotificationButton from '../components/TestNotificationButton'
-
+//import TestNotificationButton from '../components/TestNotificationButton'
+import Tutorial from '../components/Tutorial'
+import PatientDetails from '../pages/PatientDetails'
 
 const Dashboard: React.FC = () => {
   const [activeComponent, setActiveComponent] = useState<string>('summary')
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null)
   const { user } = useAuth()
+  const [showTutorial, setShowTutorial] = useState(false)
 
   useEffect(() => {
     console.log('Usuario actual:', user)
     console.log('Rol del usuario:', user?.role)
+    const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
+    if (!hasSeenTutorial) {
+      setShowTutorial(true);
+    }
   }, [user])
 
   const handleSelectPatient = (patient: Patient) => {
@@ -102,8 +108,13 @@ const Dashboard: React.FC = () => {
   }
 
   // Añadir el icono de User al final del arreglo
-  navItems.push({ icon: <MessageSquare size={24} />, title: "Mensajes", id: 'messages' })
+  navItems.push({ icon: <MessageSquare size={24} />, title: "Mensajes", id: 'chat' })
   navItems.push({ icon: <User size={24} />, title: "Perfil", id: 'profile' })
+
+  const handleCloseTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem('hasSeenTutorial', 'true');
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -131,8 +142,10 @@ const Dashboard: React.FC = () => {
       </nav>
       <main className="flex-grow p-6 overflow-y-auto">
         {renderComponent()}
+        {showTutorial && <Tutorial onClose={handleCloseTutorial} />}
+        {selectedPatientId && <PatientDetails patientId={selectedPatientId} />}
       </main>
-      <TestNotificationButton />
+      {/* <TestNotificationButton /> */}
     </div>
   )
 }

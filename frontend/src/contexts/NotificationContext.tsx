@@ -2,14 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback } fr
 import { getNotifications, markNotificationAsRead, markAllNotificationsAsRead, deleteAllNotifications } from '../services/notificationService';
 import { useAuth } from './AuthContext';
 import { io } from 'socket.io-client';
-
-interface Notification {
-    id: number;
-    message: string;
-    type: 'info' | 'warning' | 'success';
-    read: boolean;
-    createdAt: Date;
-}
+import { Notification } from '../types/notification';
 
 interface NotificationState {
     notifications: Notification[];

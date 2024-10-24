@@ -1,5 +1,5 @@
 import express from "express"
-import { getAllPacientes, getPacienteById, createPaciente, updatePaciente, deletePaciente, getPacienteCitas, getPacienteDetails, getHistorialMedico, addHistorialMedico } from "../controllers/pacienteController"
+import { getAllPacientes, getPacienteById, createPaciente, updatePaciente, deletePaciente, getPacienteCitas, getPacienteDetails, getHistorialMedico, addHistorialMedico, updateHistorialMedico } from "../controllers/pacienteController"
 import { auth, roleAuth } from "../middleware/auth"
 import { UserRole } from "../types/roles"
 import { getEjerciciosByPatient, createEjercicio } from "../controllers/ejercicioController"
@@ -7,6 +7,9 @@ import { getPacientePlanTratamiento } from "../controllers/pacienteController";
 import { getPacienteObjetivos } from "../controllers/pacienteController";
 import { getPacienteProgresos } from "../controllers/pacienteController";
 import { getPacienteMensajes } from "../controllers/pacienteController";
+import multer from 'multer';
+
+const upload = multer({ dest: 'uploads/' });
 
 const router = express.Router()
 
@@ -24,6 +27,7 @@ router.get("/:pacienteId/progresos", auth, roleAuth([UserRole.ADMIN, UserRole.FI
 router.get("/:pacienteId/mensajes", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getPacienteMensajes);
 router.get("/:id/details", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getPacienteDetails);
 router.get("/:pacienteId/historial-medico", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getHistorialMedico)
-router.post("/:pacienteId/historial-medico", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), addHistorialMedico)
+router.post("/:pacienteId/historial-medico", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), upload.single('fotoInicial'), addHistorialMedico)
+router.put("/:pacienteId/historial-medico/:historialId", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), upload.single('fotoFinal'), updateHistorialMedico)
 
 export default router

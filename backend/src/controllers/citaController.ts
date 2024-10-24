@@ -3,6 +3,8 @@ import { AppDataSource } from "../config/database"
 import { Cita } from "../models/Cita"
 import { Paciente } from "../models/Paciente"
 import logger from '../utils/logger';
+import { createAppointmentReminder } from './NotificationController';
+import { createNotification } from './NotificationController';
 
 const citaRepository = AppDataSource.getRepository(Cita)
 const pacienteRepository = AppDataSource.getRepository(Paciente)
@@ -37,6 +39,17 @@ export const createCita = async (req: Request, res: Response) => {
         });
 
         const result = await citaRepository.save(newCita);
+
+        // Crear recordatorio para la nueva cita
+        await createAppointmentReminder(result.id);
+
+        // Enviar notificación inmediata al paciente
+        await createNotification(
+            patientId,
+            `Se ha programado una nueva cita para el ${new Date(date).toLocaleString()}`,
+            'appointment'
+        );
+
         res.status(201).json(result);
     } catch (error) {
         logger.error("Error al crear cita:", error);
@@ -77,6 +90,7 @@ export const updateCita = async (req: Request, res: Response) => {
             cita.patient = newPatient;
         }
 
+        const oldDate = cita.date;
         cita.date = new Date(date) || cita.date;
         cita.physicianName = physicianName || cita.physicianName;
         cita.status = status || cita.status;
@@ -85,6 +99,12 @@ export const updateCita = async (req: Request, res: Response) => {
         cita.reasonForVisit = reasonForVisit || cita.reasonForVisit;
 
         const updatedCita = await citaRepository.save(cita);
+
+        // Si la fecha de la cita ha cambiado, actualizar el recordatorio
+        if (oldDate.getTime() !== updatedCita.date.getTime()) {
+            await createAppointmentReminder(updatedCita.id);
+        }
+
         res.json(updatedCita);
     } catch (error) {
         logger.error("Error al actualizar cita:", error);
