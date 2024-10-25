@@ -5,11 +5,14 @@ import { AuthProvider } from './contexts/AuthContext'
 import { NotificationProvider } from './contexts/NotificationContext'
 import App from './App'
 import './index.css'  // Asegúrate de que este archivo exista y contenga tus estilos globales
+import { checkTokenValidity } from './utils/auth'
+
+checkTokenValidity()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider key={localStorage.getItem('authToken') || 'logout'}>
+      <AuthProvider>
         <NotificationProvider>
           <App />
         </NotificationProvider>

@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { User } from '../types/user';
 import { setAuthToken } from '../api/api';
-import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
@@ -21,7 +20,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -45,11 +43,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.clear();
+    // Primero, establecemos el estado de autenticación a falso
+    setIsAuthenticated(false);
     setUser(null);
     setToken(null);
-    setIsAuthenticated(false);
-    navigate('/');
+
+    // Luego, redirigimos
+    window.location.href = '/';
+
+    // Finalmente, limpiamos el localStorage
+    // Esto se ejecutará después de que la página comience a cargar
+    setTimeout(() => {
+      localStorage.clear();
+    }, 0);
   };
 
   return (
