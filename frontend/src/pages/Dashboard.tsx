@@ -186,11 +186,21 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
       </nav>
-      <main className="flex-grow p-6 overflow-y-auto">
-        {renderComponent()}
-        {showTutorial && <Tutorial onClose={handleCloseTutorial} />}
-        {selectedPatientId && <PatientDetails patientId={selectedPatientId} />}
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* ... Header ... */}
+        
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200">
+          <div className="container mx-auto px-6 py-8">
+            {renderComponent()}
+            
+            {/* Renderización condicional de PatientDetails */}
+            {selectedPatientId && <PatientDetails patientId={selectedPatientId} />}
+          </div>
+        </main>
+      </div>
+      {showTutorial && (
+        <Tutorial onClose={handleCloseTutorial} />
+      )}
       {/* <TestNotificationButton /> */}
     </div>
   )
