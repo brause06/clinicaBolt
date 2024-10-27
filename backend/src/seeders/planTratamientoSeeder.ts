@@ -1,5 +1,5 @@
 import { AppDataSource } from "../config/database"
-import { PlanTratamiento } from "../models/PlanTratamiento"
+import { PlanTratamiento, TipoTratamiento } from "../models/PlanTratamiento"
 import { Paciente } from "../models/Paciente"
 
 export const seedPlanesTratamiento = async () => {
@@ -14,21 +14,30 @@ export const seedPlanesTratamiento = async () => {
     }
 
     const planesTratamiento = [
-        { name: 'Terapia manual', duration: '30 minutos', frequency: '2 veces por semana' },
-        { name: 'Ejercicios de fortalecimiento', duration: '45 minutos', frequency: '3 veces por semana' },
-        { name: 'Electroterapia', duration: '20 minutos', frequency: '3 veces por semana' },
-        { name: 'Estiramientos', duration: '15 minutos', frequency: 'Diario' }
+        { nombre: 'Terapia manual', tipoId: TipoTratamiento.TERAPIA_MANUAL, duracion: '30 minutos', frecuencia: '2 veces por semana' },
+        { nombre: 'Ejercicios de fortalecimiento', tipoId: TipoTratamiento.GIMNASIA_TERAPEUTICA, duracion: '45 minutos', frecuencia: '3 veces por semana' },
+        { nombre: 'Electroterapia', tipoId: TipoTratamiento.AGENTE_FISICO, duracion: '20 minutos', frecuencia: '3 veces por semana' },
+        { nombre: 'Estiramientos', tipoId: TipoTratamiento.GIMNASIA_TERAPEUTICA, duracion: '15 minutos', frecuencia: 'Diario' }
     ]
 
     for (const paciente of pacientes) {
         for (const plan of planesTratamiento) {
-            const newPlan = planTratamientoRepository.create({
-                ...plan,
+            const nuevoPlan = planTratamientoRepository.create({
+                name: plan.nombre,
+                tipo: plan.tipoId, // Esto debería ser un string que coincida con los valores en TipoTratamiento
+                duration: plan.duracion,
+                frequency: plan.frecuencia,
                 patient: paciente
-            })
-            await planTratamientoRepository.save(newPlan)
+            });
+
+            try {
+                await planTratamientoRepository.save(nuevoPlan);
+                console.log(`Plan de tratamiento creado: ${nuevoPlan.name}`);
+            } catch (error) {
+                console.error(`Error al crear plan de tratamiento: ${plan.nombre}`, error);
+            }
         }
     }
 
-    console.log("Planes de tratamiento insertados con éxito.")
+    console.log(`Se insertaron los planes de tratamiento con éxito.`)
 }

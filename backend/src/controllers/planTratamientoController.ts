@@ -3,9 +3,11 @@ import { AppDataSource } from "../config/database"
 import { PlanTratamiento } from "../models/PlanTratamiento"
 import { Paciente } from "../models/Paciente"
 import logger from '../utils/logger';
+import { Sesion } from "../models/Sesion"
 
 const planTratamientoRepository = AppDataSource.getRepository(PlanTratamiento)
 const pacienteRepository = AppDataSource.getRepository(Paciente)
+const sesionRepository = AppDataSource.getRepository(Sesion)
 
 export const getAllPlanesTratamiento = async (req: Request, res: Response) => {
     try {
@@ -32,13 +34,14 @@ export const getPlanTratamientoByPatient = async (req: Request, res: Response) =
 
 export const createPlanTratamiento = async (req: Request, res: Response) => {
     try {
-        const { name, duration, frequency, patientId } = req.body;
+        const { name, tipo, duration, frequency, patientId } = req.body;
         const paciente = await pacienteRepository.findOne({ where: { id: patientId } });
         if (!paciente) {
             return res.status(404).json({ message: "Paciente no encontrado" });
         }
         const newPlanTratamiento = planTratamientoRepository.create({
             name,
+            tipo,
             duration,
             frequency,
             patient: paciente
@@ -109,5 +112,45 @@ export const getPacientePlanesTratamiento = async (req: Request, res: Response) 
     } catch (error) {
         logger.error("Error al obtener los planes de tratamiento del paciente:", error);
         res.status(500).json({ message: "Error al obtener los planes de tratamiento del paciente" });
+    }
+};
+
+export const createSesion = async (req: Request, res: Response) => {
+    try {
+        const { fecha, duracion, notas, evolucion, planTratamientoId } = req.body;
+        const planTratamiento = await planTratamientoRepository.findOne({ where: { id: planTratamientoId } });
+
+        if (!planTratamiento) {
+            return res.status(404).json({ message: "Plan de tratamiento no encontrado" });
+        }
+
+        const nuevaSesion = sesionRepository.create({
+            fecha: new Date(fecha),
+            duracion,
+            notas,
+            evolucion,
+            planTratamiento
+        });
+
+        const resultado = await sesionRepository.save(nuevaSesion);
+        res.status(201).json(resultado);
+    } catch (error) {
+        logger.error("Error al crear sesión:", error);
+        res.status(500).json({ message: "Error al crear sesión" });
+    }
+};
+
+export const getSesionesPlanTratamiento = async (req: Request, res: Response) => {
+    try {
+        const planTratamientoId = parseInt(req.params.planTratamientoId);
+        const sesiones = await sesionRepository.find({
+            where: { planTratamiento: { id: planTratamientoId } },
+            order: { fecha: "DESC" }
+        });
+
+        res.json(sesiones);
+    } catch (error) {
+        logger.error("Error al obtener sesiones:", error);
+        res.status(500).json({ message: "Error al obtener sesiones" });
     }
 };
