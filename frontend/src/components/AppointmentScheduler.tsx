@@ -28,21 +28,24 @@ const AppointmentScheduler: React.FC = () => {
   const [reasonForVisit, setReasonForVisit] = useState<string>('')
   const [appointments, setAppointments] = useState<Cita[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
+  const [selectedFilterPatient, setSelectedFilterPatient] = useState<number | null>(null)
 
   useEffect(() => {
     if (token) {
-      fetchAppointments()
+      fetchAppointments(selectedFilterPatient)
       if (user?.role !== UserRole.PACIENTE) {
         fetchPatients()
       }
     }
-  }, [token, user])
+  }, [token, user, selectedFilterPatient])
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (patientId?: number | null) => {
     try {
       let response
       if (user?.role === UserRole.PACIENTE) {
         response = await api.get(`/pacientes/${user.id}/citas`)
+      } else if (patientId) {
+        response = await api.get(`/pacientes/${patientId}/citas`)
       } else {
         response = await api.get('/citas')
       }
@@ -244,11 +247,40 @@ const AppointmentScheduler: React.FC = () => {
     )
   }
 
+  const renderPatientFilter = () => {
+    if (user?.role === UserRole.PACIENTE) return null
+
+    return (
+      <div className="mb-4">
+        <label htmlFor="patientFilter" className="block text-sm font-medium text-gray-700 mb-2">
+          Filtrar por paciente:
+        </label>
+        <select
+          id="patientFilter"
+          value={selectedFilterPatient || ''}
+          onChange={(e) => handleFilterPatient(e.target.value ? Number(e.target.value) : null)}
+          className="w-full p-2 border rounded-md"
+        >
+          <option value="">Todos los pacientes</option>
+          {patients.map(patient => (
+            <option key={patient.id} value={patient.id}>{patient.name}</option>
+          ))}
+        </select>
+      </div>
+    )
+  }
+
+  const handleFilterPatient = (patientId: number | null) => {
+    setSelectedFilterPatient(patientId)
+    fetchAppointments(patientId)
+  }
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold mb-4">
         {user?.role === UserRole.PACIENTE ? "Mis Citas" : "Programar Cita"}
       </h2>
+      {renderPatientFilter()}
       {renderCalendar()}
       {renderAppointmentForm()}
       <div className="mt-8">
