@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Calendar, FileText, Activity, MessageSquare, User, Users, BarChart, TrendingUp, Target, ClipboardList, Menu, ChevronLeft } from 'lucide-react'
+import { Calendar, FileText, Activity, MessageSquare, User, Users, BarChart, TrendingUp, Target, ClipboardList, Menu, ChevronLeft, ChevronDown, ChevronRight } from 'lucide-react'
 import AppointmentScheduler from '../components/AppointmentScheduler'
 import MedicalHistory from '../components/MedicalHistory'
 import ExercisePlan from '../components/ExercisePlan'
@@ -7,7 +7,6 @@ import Chat from '../components/Chat'
 import TreatmentPlan from '../components/TreatmentPlan'
 import PatientProgress from '../components/PatientProgress'
 import TreatmentGoals from '../components/TreatmentGoals'
-import DashboardNavItem from '../components/DashboardNavItem'
 import UserProfile from '../components/UserProfile'
 import ActivitySummary from '../components/ActivitySummary'
 import { useAuth } from '../contexts/AuthContext'
@@ -24,6 +23,7 @@ const Dashboard: React.FC = () => {
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null)
   const { user } = useAuth()
   const [showTutorial, setShowTutorial] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   useEffect(() => {
     console.log('Usuario actual:', user)
@@ -37,6 +37,19 @@ const Dashboard: React.FC = () => {
   const handleSelectPatient = (patient: Patient) => {
     setSelectedPatientId(patient.id)
   }
+
+  const toggleExpand = (itemId: string) => {
+    setExpandedItems(prev =>
+      prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+    );
+  };
+
+  const handleItemClick = (itemId: string) => {
+    setActiveComponent(itemId);
+    if (itemId === 'patients') {
+      toggleExpand(itemId);
+    }
+  };
 
   const renderComponent = () => {
     switch (activeComponent) {
@@ -90,26 +103,35 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  const navItems = [
+  interface NavItem {
+    icon: React.ReactNode;
+    title: string;
+    id: string;
+    subItems?: NavItem[];
+  }
+
+  const navItems: NavItem[] = [
     { icon: <BarChart size={24} />, title: "Resumen", id: 'summary' },
     { icon: <Calendar size={24} />, title: "Citas", id: 'appointments' },
-    { icon: <FileText size={24} />, title: "Historial Médico", id: 'medical-history' },
-    { icon: <Activity size={24} />, title: "Plan de Ejercicios", id: 'exercise-plan' },
+    { icon: <MessageSquare size={24} />, title: "Mensajes", id: 'chat' },
+    { icon: <User size={24} />, title: "Perfil", id: 'profile' }
   ]
 
   if (user?.role && user.role !== UserRole.PACIENTE) {
-    console.log('Agregando elementos para no pacientes')
-    navItems.splice(1, 0, { icon: <Users size={24} />, title: "Pacientes", id: 'patients' })
-    navItems.push(
+    const patientSubItems: NavItem[] = [
+      { icon: <FileText size={24} />, title: "Historial Médico", id: 'medical-history' },
+      { icon: <Activity size={24} />, title: "Plan de Ejercicios", id: 'exercise-plan' },
       { icon: <ClipboardList size={24} />, title: "Plan de Tratamiento", id: 'treatment-plan' },
-      { icon: <Target size={24} />, title: "Objetivos de Tratamiento", id: 'goals' },
+      { icon: <Target size={24} />, title: "Objetivos", id: 'goals' },
       { icon: <TrendingUp size={24} />, title: "Progreso del Paciente", id: 'progress' },
-    )
+    ]
+    navItems.splice(1, 0, { 
+      icon: <Users size={24} />, 
+      title: "Pacientes", 
+      id: 'patients',
+      subItems: patientSubItems
+    })
   }
-
-  // Añadir el icono de User al final del arreglo
-  navItems.push({ icon: <MessageSquare size={24} />, title: "Mensajes", id: 'chat' })
-  navItems.push({ icon: <User size={24} />, title: "Perfil", id: 'profile' })
 
   const handleCloseTutorial = () => {
     setShowTutorial(false);
@@ -129,14 +151,38 @@ const Dashboard: React.FC = () => {
           {/* Mostrar el rol del usuario */}
           <p className="px-4 py-2 text-sm text-gray-600">Rol: {user?.role || 'No definido'}</p>
           {navItems.map((item) => (
-            <DashboardNavItem
-              key={item.id}
-              icon={item.icon}
-              title={item.title}
-              active={activeComponent === item.id}
-              onClick={() => setActiveComponent(item.id)}
-              showTitle={isSidebarOpen}
-            />
+            <div key={item.id}>
+              <button
+                onClick={() => handleItemClick(item.id)}
+                className={`w-full flex items-center justify-between px-4 py-2 text-gray-700 hover:bg-gray-200 ${activeComponent === item.id ? 'bg-gray-200' : ''}`}
+              >
+                <div className="flex items-center">
+                  {item.icon}
+                  <span className={`ml-2 ${isSidebarOpen ? 'block' : 'hidden'}`}>{item.title}</span>
+                </div>
+                {item.subItems && isSidebarOpen && (
+                  expandedItems.includes(item.id) ? (
+                    <ChevronDown size={20} />
+                  ) : (
+                    <ChevronRight size={20} />
+                  )
+                )}
+              </button>
+              {item.subItems && expandedItems.includes(item.id) && (
+                <div className="ml-4">
+                  {item.subItems.map((subItem) => (
+                    <button
+                      key={subItem.id}
+                      onClick={() => setActiveComponent(subItem.id)}
+                      className={`w-full flex items-center px-4 py-2 text-gray-700 hover:bg-gray-200 ${activeComponent === subItem.id ? 'bg-gray-200' : ''}`}
+                    >
+                      {subItem.icon}
+                      <span className={`ml-2 ${isSidebarOpen ? 'block' : 'hidden'}`}>{subItem.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </nav>
