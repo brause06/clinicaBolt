@@ -21,6 +21,7 @@ const upload = multer({ storage: storage })
 
 router.get("/profile/:id", auth, getUserProfile)
 router.put("/profile/:id", auth, upload.single('profileImage'), updateUserProfile)
+router.get("/", auth, getAllUsers)
 router.get("/", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getUsersByUsername)
 
 export default router

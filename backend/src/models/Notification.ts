@@ -23,4 +23,7 @@ export class Notification {
 
   @Column()
   createdAt!: Date;
+
+  @Column({ default: false })
+  deleted!: boolean;
 }

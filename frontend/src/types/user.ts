@@ -5,21 +5,21 @@ export enum UserRole {
 }
 
 export interface User {
-  id: number;
-  username: string;
-  password: string;
-  email: string;
-  age?: number;
-  phoneNumber?: string;
-  role: UserRole;
-  specialization?: string;
-  dateOfBirth?: string;
-  address?: string;
-  profileImageUrl?: string;
+    id: number;
+    username: string;
+    password: string;
+    email: string;
+    age?: number;
+    phoneNumber?: string;
+    role: UserRole;
+    specialization?: string;
+    dateOfBirth?: string;
+    address?: string;
+    profileImageUrl?: string;
 }
 
 export interface PacienteBasico {
-  id: number;
-  name: string;
+    id: number;
+    name: string;
+    profileImageUrl?: string;
 }
-

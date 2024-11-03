@@ -9,6 +9,7 @@ import logger from '../utils/logger';
 import * as schedule from 'node-schedule';
 import { PlanTratamiento } from "../models/PlanTratamiento";
 import { Cita } from "../models/Cita";
+import { MoreThan } from "typeorm";
 
 const notificationRepository = AppDataSource.getRepository(Notification);
 const userRepository = AppDataSource.getRepository(Usuario);
@@ -22,11 +23,15 @@ export const getNotifications = async (req: Request, res: Response) => {
         }
         const userId = (req.user as any).id;
         const page = parseInt(req.query.page as string) || 1;
-        const limit = 10; // Número de notificaciones por página
+        const limit = 10;
         const skip = (page - 1) * limit;
 
         const [notifications, total] = await notificationRepository.findAndCount({
-            where: { user: { id: userId } },
+            where: { 
+                user: { id: userId },
+                createdAt: MoreThan(new Date(Date.now() - 24 * 60 * 60 * 1000)),
+                deleted: false
+            },
             order: { createdAt: "DESC" },
             take: limit,
             skip: skip
@@ -63,31 +68,27 @@ export const markAsRead = async (req: Request, res: Response) => {
 };
 
 export const createNotification = async (userId: number, message: string, type: 'info' | 'warning' | 'success' | 'appointment' | 'treatment') => {
-  try {
-    const user = await userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      logger.error(`Usuario no encontrado para el ID: ${userId}`);
-      throw new Error("Usuario no encontrado");
+    try {
+        const user = await userRepository.findOne({ where: { id: userId } });
+        if (!user) {
+            throw new Error("Usuario no encontrado");
+        }
+        const notification = notificationRepository.create({
+            message,
+            type,
+            user,
+            createdAt: new Date(),
+            deleted: false
+        });
+        
+        const savedNotification = await notificationRepository.save(notification);
+        socketIo.to(userId.toString()).emit('newNotification', savedNotification);
+        
+        return savedNotification;
+    } catch (error) {
+        logger.error("Error al crear notificación:", error);
+        throw error;
     }
-    const notification = notificationRepository.create({
-      message,
-      type,
-      user,
-      createdAt: new Date()
-    });
-    const savedNotification = await notificationRepository.save(notification);
-    logger.info(`Notificación creada para el usuario ${userId}:`, savedNotification);
-    
-    // Emitir la notificación al cliente
-    logger.info(`Intentando emitir notificación al usuario ${userId}`);
-    socketIo.to(userId.toString()).emit('newNotification', savedNotification);
-    logger.info(`Notificación emitida para el usuario ${userId}:`, savedNotification);
-    
-    return savedNotification;
-  } catch (error) {
-    logger.error("Error al crear notificación:", error);
-    throw error;
-  }
 };
 
 export const createTestNotification = async (req: Request, res: Response) => {
@@ -135,39 +136,27 @@ export const markAllNotificationsAsRead = async (req: Request, res: Response) =>
 
 export const deleteAllNotifications = async (req: Request, res: Response) => {
     try {
-        logger.info("Iniciando deleteAllNotifications");
-        logger.info("req.user:", req.user);
         if (!req.user || typeof req.user === 'string') {
-            logger.error("Usuario no autenticado o inválido");
-            return res.status(401).json({ message: "Usuario no autenticado o inválido" });
+            return res.status(401).json({ message: "Usuario no autenticado" });
         }
         
         const userId = (req.user as any).userId;
-        logger.info("ID del usuario:", userId);
-        if (!userId) {
-            logger.error("ID de usuario no encontrado");
-            return res.status(400).json({ message: "ID de usuario no encontrado" });
-        }
         
         const result = await notificationRepository
             .createQueryBuilder()
-            .delete()
-            .from(Notification)
+            .update(Notification)
+            .set({ deleted: true })
             .where("userId = :userId", { userId })
             .execute();
         
-        logger.info("Resultado de la eliminación:", result);
-        
         if (socketIo instanceof Server) {
             socketIo.to(userId.toString()).emit('notificationsDeleted');
-        } else {
-            logger.info("Socket.IO no está configurado correctamente");
         }
         
         res.json({ message: "Todas las notificaciones han sido eliminadas", count: result.affected });
-    } catch (error: any) {
-        logger.error("Error detallado al eliminar todas las notificaciones:", error);
-        res.status(500).json({ message: "Error al eliminar todas las notificaciones", error: error.message });
+    } catch (error) {
+        logger.error("Error al eliminar notificaciones:", error);
+        res.status(500).json({ message: "Error al eliminar notificaciones" });
     }
 };
 
@@ -182,34 +171,44 @@ export const createAppointmentReminder = async (appointmentId: number) => {
       throw new Error("Cita no encontrada");
     }
 
-    // Cambiar esto para que el recordatorio se envíe 1 minuto después de crear la cita
+    // Verificar si la cita ya pasó
+    const now = new Date();
+    if (appointment.date <= now) {
+      logger.info(`No se programa recordatorio para la cita ${appointmentId} porque ya pasó`);
+      return;
+    }
+
+    // Calcular la fecha del recordatorio (1 día antes de la cita)
     const reminderDate = new Date(appointment.date);
-    reminderDate.setDate(reminderDate.getDate() - 1); // Recordatorio un día antes
-    reminderDate.setHours(9, 0, 0, 0); // Establecer la hora del recordatorio a las 9:00 AM
+    reminderDate.setDate(reminderDate.getDate() - 1);
+    reminderDate.setHours(9, 0, 0, 0);
 
-     //Cambiar esto para que el recordatorio se envíe 1 minuto después de crear la cita
-    //const reminderDate = new Date(Date.now() + 60 * 1000); // 1 minuto en el futuro
+    // Solo programar si la fecha del recordatorio es en el futuro
+    if (reminderDate > now) {
+      const formattedAppointmentDate = appointment.date.toLocaleString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
 
-    const formattedAppointmentDate = appointment.date.toLocaleString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+      const message = `Recordatorio: Tienes una cita programada para ${formattedAppointmentDate}`;
+      
+      logger.info(`Programando recordatorio para la cita ${appointmentId} el ${reminderDate}`);
 
-    const message = `Recordatorio de prueba: Tienes una cita programada para ${formattedAppointmentDate}`;
-    
-    logger.info(`Programando recordatorio de prueba para la cita ${appointmentId} el ${reminderDate}`);
-
-    // Programar la notificación
-    schedule.scheduleJob(reminderDate, async () => {
-      logger.info(`Enviando recordatorio de prueba para la cita ${appointmentId}`);
-      await createNotification(appointment.patient.id, message, 'appointment');
-    });
-
-    logger.info(`Recordatorio de prueba programado con éxito para la cita ${appointmentId}`);
+      schedule.scheduleJob(reminderDate, async () => {
+        // Verificar nuevamente si la cita aún existe y no ha sido cancelada
+        const currentAppointment = await appointmentRepository.findOne({
+          where: { id: appointmentId }
+        });
+        
+        if (currentAppointment && currentAppointment.status !== 'cancelled' && currentAppointment.date > now) {
+          await createNotification(appointment.patient.id, message, 'appointment');
+        }
+      });
+    }
 
   } catch (error) {
     logger.error("Error al crear recordatorio de cita:", error);

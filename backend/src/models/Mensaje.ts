@@ -22,6 +22,18 @@ export class Mensaje {
     @Column()
     leido!: boolean;
 
+    @Column({ nullable: true, type: 'datetime' })
+    fechaEliminacion?: Date;
+
     @ManyToOne(() => Paciente, paciente => paciente.mensajes)
     paciente!: Paciente;
+
+    @Column({ nullable: true })
+    adjuntoUrl?: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    tipoAdjunto?: string;
+
+    @Column({ default: false })
+    eliminado!: boolean;
 }
