@@ -1,6 +1,14 @@
 import api from '../api/api'
-import { User } from '../types/user' // Ajusta la ruta según sea necesario
+import { User } from '../types/user'
 import axios from 'axios'
+
+export interface UserSummary {
+    citasCompletadas: number;
+    citasProximaSemana: number;
+    horasSemanales: number;
+    pacientesActivos: number;
+    interaccionesMensajes: number;
+}
 
 export const getUserProfile = async (userId: number) => {
   console.log("Solicitando perfil para el usuario:", userId)
@@ -33,7 +41,6 @@ export const updateUserProfile = async (userData: Partial<User>, profilePicture?
 
     console.log('Respuesta del servidor:', response.data);
 
-    // Asegúrate de que la respuesta incluya la nueva URL de la imagen
     if (response.data.profilePictureUrl) {
       console.log('Nueva URL de la imagen de perfil:', response.data.profilePictureUrl);
     }
@@ -54,4 +61,12 @@ export const updateUserProfile = async (userData: Partial<User>, profilePicture?
   }
 };
 
-
+export const getUserSummary = async (userId: number): Promise<UserSummary> => {
+  try {
+    const response = await api.get(`/users/summary/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener el resumen del usuario:', error);
+    throw error;
+  }
+};

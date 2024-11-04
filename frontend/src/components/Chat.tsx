@@ -109,36 +109,28 @@ const Chat: React.FC = () => {
   }, [user?.id, soundEnabled]);
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchData = async () => {
-      try {
+    const loadInitialData = async () => {
         setIsLoading(true);
-        setError(null);
-        if (user?.role === UserRole.PACIENTE) {
-          const fisioterapeutasData = await fetchFisioterapeutas();
-          if (isMounted) {
-            setFisioterapeutas(fisioterapeutasData);
-          }
-        } else {
-          const pacientesData = await fetchPacientes();
-          if (isMounted) {
-            setPacientes(pacientesData);
-          }
+        try {
+            if (user?.role === UserRole.PACIENTE) {
+                const fisios = await fetchFisioterapeutas();
+                setFisioterapeutas(fisios);
+            } else {
+                const pacientesList = await fetchPacientes();
+                setPacientes(pacientesList);
+            }
+        } catch (error) {
+            setError('Error al obtener datos');
+            console.error('Error al obtener datos:', error);
+        } finally {
+            setIsLoading(false);
         }
-      } catch (error) {
-        console.error("Error al obtener datos:", error);
-        if (isMounted) {
-          setError("Error al cargar la lista. Por favor, intenta de nuevo más tarde.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
     };
-    fetchData();
-    return () => { isMounted = false; };
-  }, [user]);
+
+    if (user?.id) {
+        loadInitialData();
+    }
+}, [user]);
 
   useEffect(() => {
     if (user?.id && (selectedPaciente || selectedFisioterapeuta)) {
@@ -285,8 +277,8 @@ const Chat: React.FC = () => {
 
   const fetchFisioterapeutas = async (): Promise<User[]> => {
     try {
-      const response = await api.get<User[]>('/users');
-      return response.data.filter(user => user.role === UserRole.FISIOTERAPEUTA);
+      const response = await api.get<User[]>('/users/fisioterapeutas');
+      return response.data;
     } catch (error) {
       console.error('Error al obtener la lista de fisioterapeutas:', error);
       throw error;

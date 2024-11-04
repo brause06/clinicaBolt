@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm"
 import { Paciente } from "./Paciente"
+import { Usuario } from "./Usuario"
 
 @Entity()
 export class Cita {
@@ -12,6 +13,9 @@ export class Cita {
     @ManyToOne(() => Paciente, paciente => paciente.citas)
     patient!: Paciente;
 
+    @ManyToOne(() => Usuario)
+    therapist!: Usuario;
+
     @Column()
     physicianName!: string;
 
@@ -22,7 +26,7 @@ export class Cita {
     notes?: string;
 
     @Column({ default: 30 })
-    duration!: number; // Duración en minutos
+    duration!: number;
 
     @Column({ nullable: true })
     reasonForVisit?: string;

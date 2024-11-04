@@ -1,5 +1,5 @@
 import express from "express"
-import { getAllMensajes, getMensajeById, createMensaje, updateMensaje, softDeleteMensaje, getPacienteMensajes, getConversacion, enviarMensaje } from "../controllers/mensajeController"
+import { getAllMensajes, getMensajeById, createMensaje, updateMensaje, softDeleteMensaje, getPacienteMensajes, getConversacion, enviarMensaje, getMensajesNoLeidos } from "../controllers/mensajeController"
 import { auth, roleAuth } from "../middleware/auth"
 import { UserRole } from "../types/roles"
 import { getAllPacientes } from "../controllers/pacienteController"
@@ -21,5 +21,6 @@ router.get("/pacientes/:pacienteId", auth, roleAuth([UserRole.ADMIN, UserRole.FI
 router.get("/conversacion/:emisorId/:receptorId", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getConversacion)
 router.post("/enviar/:emisorId/:receptorId", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), upload.single('adjunto'), enviarMensaje)
 router.get("/pacientes", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA]), getAllPacientes);
+router.get("/no-leidos/:userId", auth, roleAuth([UserRole.ADMIN, UserRole.FISIOTERAPEUTA, UserRole.PACIENTE]), getMensajesNoLeidos);
 
 export default router

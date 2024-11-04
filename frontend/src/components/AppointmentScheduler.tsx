@@ -87,12 +87,14 @@ const AppointmentScheduler: React.FC = () => {
         const newAppointment = {
           date: new Date(selectedDate.setHours(parseInt(selectedTime.split(':')[0]), parseInt(selectedTime.split(':')[1]))).toISOString(),
           patientId: selectedPatient,
+          therapistId: user?.id,
           physicianName: user?.username || 'Dr. Asignado',
           status: 'scheduled',
           notes: notes,
           duration: 30,
           reasonForVisit: reasonForVisit
         }
+        console.log('Enviando cita:', newAppointment)
         const response = await api.post('/citas', newAppointment)
         setAppointments([...appointments, response.data])
         alert(`Cita reservada para ${response.data.patient.name} el ${new Date(response.data.date).toLocaleDateString()} a las ${new Date(response.data.date).toLocaleTimeString()}`)

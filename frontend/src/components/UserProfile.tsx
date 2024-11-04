@@ -132,7 +132,6 @@ const UserProfile: React.FC = () => {
     const { name, value } = e.target
     setEditedProfile(prev => ({ ...prev, [name]: value }))
     
-    // Clear validation error when user starts typing
     if (validationErrors[name as keyof ValidationErrors]) {
       setValidationErrors(prev => ({ ...prev, [name]: undefined }))
     }
@@ -141,7 +140,7 @@ const UserProfile: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         setError('La imagen no debe superar los 5MB')
         return
       }

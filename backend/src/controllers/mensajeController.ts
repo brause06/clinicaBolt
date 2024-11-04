@@ -185,6 +185,23 @@ export const getConversacion = async (req: Request, res: Response) => {
             take: parseInt(limit as string)
         });
 
+        // Marcar como leídos los mensajes donde el usuario actual es el receptor
+        const mensajesParaActualizar = mensajes.filter(
+            mensaje => mensaje.receptor.id === parseInt(emisorId) && !mensaje.leido
+        );
+
+        if (mensajesParaActualizar.length > 0) {
+            await mensajeRepository.update(
+                mensajesParaActualizar.map(m => m.id),
+                { leido: true }
+            );
+
+            // Notificar por WebSocket que los mensajes fueron leídos
+            io.to(receptorId.toString()).emit('mensajesLeidos', {
+                mensajesIds: mensajesParaActualizar.map(m => m.id)
+            });
+        }
+
         console.log(`Se encontraron ${mensajes.length} mensajes`);
 
         res.json({
@@ -352,5 +369,40 @@ export const getUsuariosEnLinea = async (req: Request, res: Response) => {
         res.json({ usuariosEnLinea: usuariosIds });
     } catch (error) {
         res.status(500).json({ message: "Error al obtener usuarios en línea" });
+    }
+};
+
+export const getMensajesNoLeidos = async (req: Request, res: Response) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        
+        // Obtener mensajes no leídos donde el usuario es el receptor
+        const mensajes = await mensajeRepository
+            .createQueryBuilder("mensaje")
+            .leftJoinAndSelect("mensaje.emisor", "emisor")
+            .leftJoinAndSelect("mensaje.receptor", "receptor")
+            .where("receptor.id = :userId", { userId })  // Cambiado para usar la relación
+            .andWhere("mensaje.leido = :leido", { leido: false })
+            .andWhere("mensaje.eliminado = :eliminado", { eliminado: false })
+            .orderBy("mensaje.fechaEnvio", "DESC")
+            .take(5)
+            .getMany();
+
+        // Contar total de mensajes no leídos recibidos
+        const totalNoLeidos = await mensajeRepository
+            .createQueryBuilder("mensaje")
+            .leftJoin("mensaje.receptor", "receptor")
+            .where("receptor.id = :userId", { userId })  // Cambiado para usar la relación
+            .andWhere("mensaje.leido = :leido", { leido: false })
+            .andWhere("mensaje.eliminado = :eliminado", { eliminado: false })
+            .getCount();
+
+        res.json({
+            mensajes,
+            totalNoLeidos
+        });
+    } catch (error) {
+        logger.error("Error al obtener mensajes no leídos:", error);
+        res.status(500).json({ message: "Error al obtener mensajes no leídos" });
     }
 };

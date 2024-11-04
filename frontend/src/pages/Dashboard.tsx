@@ -16,6 +16,7 @@ import { Patient } from '../types/patient' // Ajusta la ruta según sea necesari
 //import TestNotificationButton from '../components/TestNotificationButton'
 import Tutorial from '../components/Tutorial'
 import PatientDetails from '../pages/PatientDetails'
+import TestButtons from '../components/TestButtons'
 
 const Dashboard: React.FC = () => {
   const [activeComponent, setActiveComponent] = useState<string>('summary')
@@ -191,10 +192,13 @@ const Dashboard: React.FC = () => {
         
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200">
           <div className="container mx-auto px-6 py-8">
-            {renderComponent()}
-            
-            {/* Renderización condicional de PatientDetails */}
-            {selectedPatientId && <PatientDetails patientId={selectedPatientId} />}
+            <div>
+               <TestButtons />
+              {renderComponent()}
+              
+              {/* Renderización condicional de PatientDetails */}
+              {selectedPatientId && <PatientDetails patientId={selectedPatientId} />}
+            </div>
           </div>
         </main>
       </div>
